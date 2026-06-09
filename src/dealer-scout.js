@@ -30,6 +30,12 @@ const CATALOG = {
     { source: 'sephora', retailer: 'Sephora', title: 'No matching WHOOP product', price: 0, listPrice: 0, couponCode: null, couponValue: 0, url: 'https://www.sephora.com/search?keyword=WHOOP', availability: 'not_applicable', sellerRating: null, risk: 'n/a', confidence: 0, freshness: 'demo' },
     { source: 'slickdeals', retailer: 'Slickdeals', title: 'WHOOP membership promo discussion', price: 189, listPrice: 239, couponCode: 'WHOOPDEAL', couponValue: 0, url: 'https://slickdeals.net/newsearch.php?q=WHOOP', availability: 'thread_active', sellerRating: null, risk: 'low', confidence: 0.7, freshness: 'demo' },
   ],
+  'whoop 5.0': [
+    { source: 'amazon', retailer: 'Amazon', title: 'WHOOP 5.0 membership bundle', price: 239, listPrice: 239, couponCode: null, couponValue: 0, url: 'https://www.amazon.com/s?k=WHOOP+5.0', availability: 'watchlist', sellerRating: 4.3, risk: 'medium', confidence: 0.62, freshness: 'demo' },
+    { source: 'ebay', retailer: 'eBay', title: 'WHOOP 5.0 / MG listings watchlist', price: 219.99, listPrice: 239, couponCode: null, couponValue: 0, url: 'https://www.ebay.com/sch/i.html?_nkw=WHOOP+5.0', availability: 'watchlist', sellerRating: 4.5, risk: 'high', confidence: 0.48, freshness: 'demo' },
+    { source: 'sephora', retailer: 'Sephora', title: 'No matching WHOOP 5.0 product', price: 0, listPrice: 0, couponCode: null, couponValue: 0, url: 'https://www.sephora.com/search?keyword=WHOOP%205.0', availability: 'not_applicable', sellerRating: null, risk: 'n/a', confidence: 0, freshness: 'demo' },
+    { source: 'slickdeals', retailer: 'Slickdeals', title: 'WHOOP 5.0 launch / membership promo watchlist', price: 229, listPrice: 239, couponCode: 'WHOOPDEAL', couponValue: 0, url: 'https://slickdeals.net/newsearch.php?q=WHOOP+5.0', availability: 'thread_active', sellerRating: null, risk: 'low', confidence: 0.64, freshness: 'demo' },
+  ],
 };
 
 const COUPONS = {
@@ -59,6 +65,7 @@ function pickDataset(query) {
   if (key.includes('dior') || key.includes('sauvage') || key.includes('sephora skincare')) return CATALOG['dior sauvage'];
   if (key.includes('dyson') || key.includes('airwrap')) return CATALOG['dyson airwrap'];
   if (key.includes('iphone') || key.includes('15 pro')) return CATALOG['iphone 15 pro max'];
+  if (key.includes('whoop') && (key.includes('5.0') || key.includes('5 ') || key.includes('mg'))) return CATALOG['whoop 5.0'];
   if (key.includes('whoop')) return CATALOG.whoop;
   return [];
 }

@@ -44,6 +44,15 @@ test('searchDealerCoupons returns WHOOP voucher intelligence for WHOOP coupon qu
   assert.doesNotMatch(coupons.telegramSummary, /No demo coupons found/);
 });
 
+test('searchDealerDeals respects WHOOP version-specific queries', () => {
+  const result = searchDealerDeals({ query: 'whoop 5.0', sources: ['amazon', 'ebay', 'sephora', 'slickdeals'] });
+
+  assert.match(result.bestDeal.title, /WHOOP (5\.0|MG)/i);
+  assert.doesNotMatch(result.bestDeal.title, /WHOOP 4\.0/i);
+  assert.doesNotMatch(result.bestDeal.url, /WHOOP\+4\.0/i);
+  assert.ok(result.telegramSummary.includes('WHOOP'));
+});
+
 test('quoteProduct returns market quote with best, safe, and risk-aware options', () => {
   const quote = quoteProduct({ query: 'Dyson Airwrap' });
 
