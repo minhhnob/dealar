@@ -13,10 +13,15 @@ test('server exposes Dealer-native scout routes for corrected product target', a
     assert.equal(capabilities.card.type, 'Dealer Capability Card');
     assert.ok(capabilities.card.capabilities.some((item) => item.id === 'scout.report'));
 
-    const skills = await fetch(`${baseUrl}/v1/scout/skills`).then((res) => res.json());
+    const skills = await fetch(`${baseUrl}/v1/scout/skills`).then((response) => response.json());
     assert.equal(skills.manifest.name, 'Dealar Skill System');
-    assert.ok(skills.manifest.skills.some((item) => item.id === 'dealar.payment.policy'));
+    assert.equal(skills.manifest.skills.length, 5);
     assert.match(skills.telegramSummary, /Deal Request Ticket/);
+
+    const mcpReadiness = await fetch(`${baseUrl}/v1/scout/mcp-readiness`).then((response) => response.json());
+    assert.equal(mcpReadiness.plan.name, 'Dealar MCP Readiness Plan');
+    assert.ok(mcpReadiness.plan.recommendedStarterStack.includes('github'));
+    assert.match(mcpReadiness.telegramSummary, /MCP Readiness/);
 
     const telegramHealth = await fetch(`${baseUrl}/v1/telegram/dealar-agent/health`).then((res) => res.json());
     assert.equal(telegramHealth.ok, true);

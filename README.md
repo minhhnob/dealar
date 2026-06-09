@@ -152,6 +152,32 @@ Keep real wallet addresses, keys, and deployment secrets outside source code.
 
 ---
 
+## MCP readiness plan
+
+The X article `50 MCP Servers That Give Claude, Codex & Gemini Superpowers` maps well to Dealar as a focused MCP stack, not a 50-tool install spree. Dealar exposes an MCP readiness artifact:
+
+```bash
+curl https://prodeal-api.vercel.app/v1/scout/mcp-readiness
+```
+
+Recommended starter stack:
+
+- `github` — repo/issue/PR context for Dealar maintenance agents.
+- `context7` — current docs for x402, Telegram, Vercel, frontend SDKs.
+- `playwright` — browser QA for dashboard, Scout Report links, and Telegram setup pages.
+- `brave-search` — grounded live deal, voucher, merchant, and product research.
+- `vercel` — deployment/log verification for production releases.
+
+Safety guardrails translated into Dealar:
+
+- Keep 3-5 high-value MCP servers active; avoid tool bloat.
+- Prefer vendor-official servers and pin local/community versions.
+- Scope tokens read-only first.
+- Never enable unsupervised production writes or money-moving actions.
+- Keep x402/Circle payment actions behind explicit human confirmation.
+
+---
+
 ## Telegram agent setup
 
 Dealar now exposes both a Telegram-ready agent endpoint and a real Telegram Bot webhook. A Telegram bot can receive user messages, call the Dealar agent brain, and send the returned result back to the Telegram chat.

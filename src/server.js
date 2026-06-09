@@ -28,6 +28,7 @@ import { renderDashboardHtml } from './dashboard.js';
 import { buildGatewayRoutePrices, getGatewayEnvironment } from './gateway-config.js';
 import { buildGatewayTraceModel, fetchGatewaySettlement, resolveGatewayBatchTx } from './gateway-trace.js';
 import { createDemoReceiptLedger, getPaymentReceipt, summarizePaymentLedger } from './payment-ledger.js';
+import { buildDealarMcpReadiness, formatMcpReadinessTelegramSummary } from './mcp-integration-catalog.js';
 import { listMarketplaceServices, summarizeMarketplaceServices } from './service-catalog.js';
 import { answerTelegramDealRequest, buildTelegramSetupGuide } from './telegram-agent.js';
 import { buildTelegramWebhookSetup, handleTelegramWebhook } from './telegram-bot-webhook.js';
@@ -170,6 +171,12 @@ export async function createApp() {
     const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
     const manifest = buildDealarSkillManifest({ baseUrl });
     res.json({ manifest, telegramSummary: formatDealarSkillTelegramSummary(manifest) });
+  });
+
+  app.get('/v1/scout/mcp-readiness', (req, res) => {
+    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const plan = buildDealarMcpReadiness({ baseUrl });
+    res.json({ plan, telegramSummary: formatMcpReadinessTelegramSummary(plan) });
   });
 
   app.get('/v1/scout/report', (req, res) => {

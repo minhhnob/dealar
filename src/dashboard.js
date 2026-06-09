@@ -10,6 +10,7 @@ import { buildDealerMarketplaceListing, buildPaymentProducts, createDealerPaymen
 import { buildDealerCapabilityCard, buildScoutReport, createDealRequestTicket } from './dealer-native-product.js';
 import { buildDealarBrandSystem } from './dealar-brand.js';
 import { buildDealarSkillManifest } from './dealar-skill-system.js';
+import { buildDealarMcpReadiness } from './mcp-integration-catalog.js';
 
 const escapeHtml = (value) => String(value ?? '')
   .replaceAll('&', '&amp;')
@@ -24,6 +25,7 @@ export function buildDashboardModel({
 } = {}) {
   const brandSystem = buildDealarBrandSystem();
   const skillManifest = buildDealarSkillManifest({ baseUrl: apiBaseUrl });
+  const mcpReadiness = buildDealarMcpReadiness({ baseUrl: apiBaseUrl });
   const whoop = searchDeals({ query: 'whoop', regions: ['us', 'eu'] });
   const retailers = listRetailers({ category: 'beauty', markets: ['us', 'eu'] });
   const gatewayTrace = buildGatewayTraceModel({
@@ -126,6 +128,7 @@ export function buildDashboardModel({
     dealRequestTicket,
     dealerCapabilityCard,
     skillManifest,
+    mcpReadiness,
     runtimeIntegrations: [
       { name: 'JSON CLI Bridge', command: 'npm run cli -- {"action":"deal.search","params":{"query":"whoop"}}', status: 'live' },
       { name: 'Hermes Plugin', command: 'dealar_search_deals(query="whoop", regions="us,eu")', status: 'scaffolded' },
@@ -294,6 +297,21 @@ export function renderDashboardHtml(model = buildDashboardModel()) {
       <h2>Skill Safety Guardrails</h2>
       <div class="flow">${model.skillManifest.referencePrinciples.map((principle) => `<div>${escapeHtml(principle)}</div>`).join('')}</div>
       <p class="muted">Never auto-execute: ${model.skillManifest.activationPolicy.neverAutoExecute.map((item) => `<code>${escapeHtml(item)}</code>`).join(' ')}</p>
+    </div>
+  </section>
+
+  <section class="sections">
+    <div class="panel">
+      <h2>MCP Readiness Stack</h2>
+      <p class="muted">Inspired by the MCP server catalog: Dealar keeps a small high-value tool stack for research, docs grounding, browser QA, deployment checks, and supervised payment safety.</p>
+      <table><thead><tr><th>MCP</th><th>Use in Dealar</th><th>Status</th></tr></thead><tbody>
+      ${model.mcpReadiness.integrations.slice(0, 7).map((item) => `<tr><td>${escapeHtml(item.name)}<br><span class="muted">${escapeHtml(item.category)}</span></td><td>${escapeHtml(item.dealarUseCase)}</td><td><code>${escapeHtml(item.status)}</code></td></tr>`).join('')}
+      </tbody></table>
+    </div>
+    <div class="panel">
+      <h2>MCP Safety Guardrails</h2>
+      <div class="flow">${model.mcpReadiness.summary.safetyPrinciples.map((principle) => `<div>${escapeHtml(principle)}</div>`).join('')}</div>
+      <p class="muted">Starter stack: ${model.mcpReadiness.recommendedStarterStack.map((item) => `<code>${escapeHtml(item)}</code>`).join(' ')}</p>
     </div>
   </section>
 
