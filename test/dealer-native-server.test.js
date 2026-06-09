@@ -1,0 +1,38 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+import { createApp } from '../src/server.js';
+
+test('server exposes Dealer-native scout routes for corrected product target', async () => {
+  const app = await createApp();
+  const server = app.listen(0);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+
+  try {
+    const capabilities = await fetch(`${baseUrl}/v1/scout/capabilities`).then((res) => res.json());
+    assert.equal(capabilities.card.type, 'Dealer Capability Card');
+    assert.ok(capabilities.card.capabilities.some((item) => item.id === 'scout.report'));
+
+    const report = await fetch(`${baseUrl}/v1/scout/report?query=Dyson%20Airwrap`).then((res) => res.json());
+    assert.equal(report.type, 'Scout Report');
+    assert.equal(report.query, 'Dyson Airwrap');
+    assert.ok(report.telegramSummary.includes('Dealer Scout Report'));
+
+    const ticket = await fetch(`${baseUrl}/v1/scout/tickets`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: 'Sephora skincare', capabilityId: 'scout.report' }),
+    }).then((res) => {
+      assert.equal(res.status, 201);
+      return res.json();
+    });
+    assert.equal(ticket.ticket.type, 'Deal Request Ticket');
+    assert.equal(ticket.ticket.capabilityId, 'scout.report');
+
+    const receipt = await fetch(`${baseUrl}/v1/scout/receipts?query=Dior%20Sauvage`).then((res) => res.json());
+    assert.equal(receipt.receipt.type, 'Deal Receipt');
+    assert.equal(receipt.receipt.query, 'Dior Sauvage');
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});

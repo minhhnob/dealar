@@ -1,0 +1,13 @@
+name: dealar
+description: >-
+  Dealar Hermes plugin — query USDC-paywalled deal intelligence, coupon verification,
+  retailer intelligence, wallet policy, and dashboard summaries through the Dealar CLI bridge.
+version: "0.1.0"
+provides_tools:
+  - dealar_search_deals
+  - dealar_verify_coupon
+  - dealar_list_retailers
+  - dealar_wallet_policy
+  - dealar_dashboard_summary
+requires_env: []
+author: Dealar
