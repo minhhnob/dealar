@@ -132,8 +132,8 @@ x402 mode:
 ```bash
 export DEALAR_PAYMENT_MODE=x402
 export DEALAR_EVM_ADDRESS='0xYOUR_RECEIVING_WALLET'
-export X402_FACILITATOR_URL='https://x402.org/facilitator'
-export X402_NETWORK='eip155:84532'
+export X402_FACILITATOR_URL='https://conduitpay.xyz/api/x402'
+export X402_NETWORK='eip155:5042002'
 npm start
 ```
 

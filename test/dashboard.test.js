@@ -14,7 +14,7 @@ test('buildDashboardModel summarizes Dealar product, payments, wallet, and endpo
 
   assert.equal(model.brand.name, 'Dealar');
   assert.equal(model.payment.mode, 'demo');
-  assert.equal(model.payment.network, 'Base Sepolia');
+  assert.equal(model.payment.network, 'Arc Testnet');
   assert.ok(model.metrics.endpoints >= 3);
   assert.ok(model.endpoints.some((endpoint) => endpoint.path === '/v1/deals/search'));
   assert.ok(model.wallet.controls.includes('daily_limit'));

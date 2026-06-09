@@ -7,7 +7,7 @@ const SERVICES = [
     endpoint: { method: 'GET', path: '/v1/deals/search' },
     price: { usdc: '0.25', microUsdc: '250000' },
     paymentRail: 'circle_gateway_x402',
-    supportedNetworks: ['eip155:5042002', 'eip155:84532'],
+    supportedNetworks: ['eip155:5042002'],
     inputSchema: {
       type: 'object',
       properties: {
@@ -27,7 +27,7 @@ const SERVICES = [
     endpoint: { method: 'GET', path: '/v1/retailers' },
     price: { usdc: '0.05', microUsdc: '50000' },
     paymentRail: 'circle_gateway_x402',
-    supportedNetworks: ['eip155:5042002', 'eip155:84532'],
+    supportedNetworks: ['eip155:5042002'],
     inputSchema: {
       type: 'object',
       properties: {
@@ -46,7 +46,7 @@ const SERVICES = [
     endpoint: { method: 'POST', path: '/v1/coupons/verify' },
     price: { usdc: '0.01', microUsdc: '10000' },
     paymentRail: 'circle_gateway_x402',
-    supportedNetworks: ['eip155:5042002', 'eip155:84532'],
+    supportedNetworks: ['eip155:5042002'],
     inputSchema: {
       type: 'object',
       properties: {

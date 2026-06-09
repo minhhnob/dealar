@@ -82,7 +82,7 @@ export function buildDashboardModel({
     payment: {
       mode: paymentMode,
       protocol: 'x402 / Circle Gateway batching',
-      network: ['gateway', 'circle-gateway', 'circle_gateway'].includes(String(paymentMode).toLowerCase()) ? 'Arc Testnet' : 'Base Sepolia',
+      network: 'Arc Testnet',
       currency: 'USDC',
     },
     wallet: {

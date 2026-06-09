@@ -202,7 +202,7 @@ export function createPaymentChallenge({ endpoint, tier = 'basic' } = {}) {
     price_usdc: price,
     currency: 'USDC',
     protocols: ['x402', 'MPP'],
-    networks: ['base-sepolia', 'arc-testnet'],
+    networks: ['arc-testnet'],
     expires_in_seconds: 300,
     instructions: 'Retry the same request with an x402 or MPP payment proof header after paying the quoted USDC amount.',
   };

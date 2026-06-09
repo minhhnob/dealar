@@ -1,5 +1,5 @@
-const DEFAULT_NETWORK = 'eip155:84532'; // Base Sepolia
-const DEFAULT_FACILITATOR_URL = 'https://x402.org/facilitator';
+const DEFAULT_NETWORK = 'eip155:5042002'; // Arc Testnet
+const DEFAULT_FACILITATOR_URL = 'https://conduitpay.xyz/api/x402';
 const PLACEHOLDER_ADDRESSES = new Set(['0xYourEvmAddress', '0x0000000000000000000000000000000000000000']);
 
 export function priceTierToUsd(tier) {
