@@ -29,6 +29,7 @@ import { buildGatewayRoutePrices, getGatewayEnvironment } from './gateway-config
 import { buildGatewayTraceModel, fetchGatewaySettlement, resolveGatewayBatchTx } from './gateway-trace.js';
 import { createDemoReceiptLedger, getPaymentReceipt, summarizePaymentLedger } from './payment-ledger.js';
 import { listMarketplaceServices, summarizeMarketplaceServices } from './service-catalog.js';
+import { answerTelegramDealRequest, buildTelegramSetupGuide } from './telegram-agent.js';
 import { buildX402RouteConfig, getX402Environment } from './x402-config.js';
 
 const PORT = Number(process.env.PORT || 8787);
@@ -126,6 +127,18 @@ export async function createApp() {
 
   app.get('/v1/dealer/sources', (req, res) => {
     res.json({ sources: listDealerSources() });
+  });
+
+  app.get('/v1/telegram/dealar-agent/health', (req, res) => {
+    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    res.json({ ok: true, setup: buildTelegramSetupGuide({ baseUrl }) });
+  });
+
+  app.post('/v1/telegram/dealar-agent', (req, res) => {
+    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const text = req.body?.message?.text || req.body?.text || req.body?.query || '';
+    const userId = req.body?.message?.from?.id || req.body?.userId || 'telegram-user';
+    res.json(answerTelegramDealRequest({ text, baseUrl, userId }));
   });
 
   app.get('/v1/scout/capabilities', (req, res) => {

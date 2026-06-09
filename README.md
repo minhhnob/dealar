@@ -152,6 +152,51 @@ Keep real wallet addresses, keys, and deployment secrets outside source code.
 
 ---
 
+## Telegram agent setup
+
+Dealar now exposes a Telegram-ready agent endpoint. A Telegram bot or Hermes webhook wrapper can forward user messages here and send the returned `message` field back to the chat.
+
+```text
+GET  /v1/telegram/dealar-agent/health
+POST /v1/telegram/dealar-agent
+```
+
+Example request:
+
+```bash
+curl -X POST 'https://prodeal-api.vercel.app/v1/telegram/dealar-agent' \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"săn deal Dyson Airwrap dưới 350$"}'
+```
+
+Example user messages:
+
+```text
+săn deal Dyson Airwrap dưới 350$
+check giá iPhone 15 Pro Max
+tìm voucher Sephora skincare
+/scout Dior Sauvage
+/ticket Dyson Airwrap
+```
+
+Response shape:
+
+```json
+{
+  "ok": true,
+  "intent": "deal",
+  "query": "Dyson Airwrap dưới 350$",
+  "message": "Telegram-ready result text",
+  "artifacts": []
+}
+```
+
+Network target remains Arc Testnet:
+
+```text
+Arc Testnet / eip155:5042002
+```
+
 ## Main API routes
 
 Health and product surfaces:

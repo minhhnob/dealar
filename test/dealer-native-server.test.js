@@ -18,6 +18,18 @@ test('server exposes Dealer-native scout routes for corrected product target', a
     assert.ok(skills.manifest.skills.some((item) => item.id === 'dealar.payment.policy'));
     assert.match(skills.telegramSummary, /Deal Request Ticket/);
 
+    const telegramHealth = await fetch(`${baseUrl}/v1/telegram/dealar-agent/health`).then((res) => res.json());
+    assert.equal(telegramHealth.ok, true);
+    assert.equal(telegramHealth.setup.network.caip2, 'eip155:5042002');
+
+    const telegramAnswer = await fetch(`${baseUrl}/v1/telegram/dealar-agent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: 'săn deal Dyson Airwrap dưới 350$' }),
+    }).then((res) => res.json());
+    assert.equal(telegramAnswer.ok, true);
+    assert.match(telegramAnswer.message, /Dealer check/);
+
     const report = await fetch(`${baseUrl}/v1/scout/report?query=Dyson%20Airwrap`).then((res) => res.json());
     assert.equal(report.type, 'Scout Report');
     assert.equal(report.query, 'Dyson Airwrap');
