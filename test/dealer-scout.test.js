@@ -26,6 +26,24 @@ test('searchDealerDeals ranks coupon-adjusted low-risk deals across supported so
   assert.ok(result.recommendation.reason.includes('coupon-adjusted'));
 });
 
+test('searchDealerDeals uses WHOOP data for WHOOP queries instead of Dior or Sephora demo fallback', () => {
+  const result = searchDealerDeals({ query: 'giá whoop bên nào rẻ', sources: ['amazon', 'ebay', 'sephora', 'slickdeals'] });
+
+  assert.notEqual(result.bestDeal.source, 'sephora');
+  assert.match(result.bestDeal.title, /WHOOP/i);
+  assert.doesNotMatch(result.bestDeal.title, /Dior|Sauvage|Parfum/i);
+  assert.doesNotMatch(result.bestDeal.url, /sephora|Dior%20Sauvage/i);
+  assert.ok(result.telegramSummary.includes('WHOOP'));
+});
+
+test('searchDealerCoupons returns WHOOP voucher intelligence for WHOOP coupon queries', () => {
+  const coupons = searchDealerCoupons({ query: 'mã giảm giá whoop hôm nay' });
+
+  assert.ok(coupons.coupons.length > 0);
+  assert.ok(coupons.coupons.every((coupon) => /whoop|amazon|slickdeals/i.test(`${coupon.source} ${coupon.code} ${coupon.discount}`)));
+  assert.doesNotMatch(coupons.telegramSummary, /No demo coupons found/);
+});
+
 test('quoteProduct returns market quote with best, safe, and risk-aware options', () => {
   const quote = quoteProduct({ query: 'Dyson Airwrap' });
 

@@ -24,6 +24,12 @@ const CATALOG = {
     { source: 'sephora', retailer: 'Sephora', title: 'No matching beauty product', price: 0, listPrice: 0, couponCode: null, couponValue: 0, url: 'https://www.sephora.com/search?keyword=iPhone%2015%20Pro%20Max', availability: 'not_applicable', sellerRating: null, risk: 'n/a', confidence: 0, freshness: 'demo' },
     { source: 'slickdeals', retailer: 'Slickdeals', title: 'Carrier promo thread for iPhone 15 Pro Max', price: 849.99, listPrice: 1199, couponCode: 'CARRIERPROMO', couponValue: 0, url: 'https://slickdeals.net/newsearch.php?q=iPhone+15+Pro+Max', availability: 'thread_active', sellerRating: null, risk: 'medium', confidence: 0.76, freshness: 'demo' },
   ],
+  whoop: [
+    { source: 'amazon', retailer: 'Amazon', title: 'WHOOP 4.0 wearable health tracker membership bundle', price: 199, listPrice: 239, couponCode: 'CLIP20', couponValue: 20, url: 'https://www.amazon.com/s?k=WHOOP+4.0', availability: 'in_stock', sellerRating: 4.4, risk: 'medium', confidence: 0.76, freshness: 'demo' },
+    { source: 'ebay', retailer: 'eBay', title: 'WHOOP 4.0 band and charger pre-owned', price: 79.99, listPrice: 239, couponCode: null, couponValue: 0, url: 'https://www.ebay.com/sch/i.html?_nkw=WHOOP+4.0', availability: 'limited', sellerRating: 4.6, risk: 'high', confidence: 0.42, freshness: 'demo' },
+    { source: 'sephora', retailer: 'Sephora', title: 'No matching WHOOP product', price: 0, listPrice: 0, couponCode: null, couponValue: 0, url: 'https://www.sephora.com/search?keyword=WHOOP', availability: 'not_applicable', sellerRating: null, risk: 'n/a', confidence: 0, freshness: 'demo' },
+    { source: 'slickdeals', retailer: 'Slickdeals', title: 'WHOOP membership promo discussion', price: 189, listPrice: 239, couponCode: 'WHOOPDEAL', couponValue: 0, url: 'https://slickdeals.net/newsearch.php?q=WHOOP', availability: 'thread_active', sellerRating: null, risk: 'low', confidence: 0.7, freshness: 'demo' },
+  ],
 };
 
 const COUPONS = {
@@ -34,12 +40,14 @@ const COUPONS = {
   amazon: [
     { code: 'CLIP10', discount: '$10 clip coupon when available', confidence: 0.68, expiry: 'demo', sourceUrl: 'https://www.amazon.com/coupons' },
     { code: 'RENEWED50', discount: '$50 renewed device promo sample', confidence: 0.62, expiry: 'demo', sourceUrl: 'https://www.amazon.com/s?k=renewed' },
+    { code: 'CLIP20', discount: '$20 WHOOP clip coupon when available', confidence: 0.64, expiry: 'demo', sourceUrl: 'https://www.amazon.com/s?k=WHOOP+4.0' },
   ],
   ebay: [
     { code: 'EBAYREFURB', discount: 'Refurbished item discount sample', confidence: 0.58, expiry: 'demo', sourceUrl: 'https://www.ebay.com/deals' },
   ],
   slickdeals: [
     { code: 'HOTDEAL', discount: 'Community-posted sale/coupon thread', confidence: 0.74, expiry: 'demo', sourceUrl: 'https://slickdeals.net/' },
+    { code: 'WHOOPDEAL', discount: 'WHOOP membership promo thread', confidence: 0.7, expiry: 'demo', sourceUrl: 'https://slickdeals.net/newsearch.php?q=WHOOP' },
   ],
 };
 
@@ -51,7 +59,8 @@ function pickDataset(query) {
   if (key.includes('dior') || key.includes('sauvage') || key.includes('sephora skincare')) return CATALOG['dior sauvage'];
   if (key.includes('dyson') || key.includes('airwrap')) return CATALOG['dyson airwrap'];
   if (key.includes('iphone') || key.includes('15 pro')) return CATALOG['iphone 15 pro max'];
-  return CATALOG['dior sauvage'].map((item) => ({ ...item, title: item.title.replace(/Dior Sauvage/gi, query || 'Product') }));
+  if (key.includes('whoop')) return CATALOG.whoop;
+  return [];
 }
 
 function enrichDeal(deal) {
@@ -103,9 +112,14 @@ export function quoteProduct({ query = 'Dior Sauvage' } = {}) {
 
 export function searchDealerCoupons({ query = '', source } = {}) {
   const selected = source ? [source] : Object.keys(COUPONS);
+  const terms = normalize(query).split(/\s+/).filter((term) => term.length >= 3);
   const coupons = selected.flatMap((src) => (COUPONS[src] || []).map((coupon) => ({ source: src, ...coupon })))
-    .filter((coupon) => !query || `${coupon.source} ${coupon.code} ${coupon.discount}`.toLowerCase().includes(normalize(query).split(' ')[0]) || normalize(query).includes(coupon.source));
-  const body = coupons.map((coupon) => `🎟 ${coupon.source}: ${coupon.code} — ${coupon.discount}`).join('\n') || 'No demo coupons found.';
+    .filter((coupon) => {
+      if (!query) return true;
+      const haystack = `${coupon.source} ${coupon.code} ${coupon.discount}`.toLowerCase();
+      return terms.some((term) => haystack.includes(term)) || normalize(query).includes(coupon.source);
+    });
+  const body = coupons.map((coupon) => `🎟 ${coupon.source}: ${coupon.code} — ${coupon.discount}`).join('\n') || `No verified coupons found for "${query}" in the demo catalog.`;
   return { query, source: source || 'all', coupons, telegramSummary: `🎟 Dealer coupons\n${body}` };
 }
 
