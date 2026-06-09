@@ -9,6 +9,7 @@ import { buildConduitReferenceModel, buildDealerConduitIntegrationPlan } from '.
 import { buildDealerMarketplaceListing, buildPaymentProducts, createDealerPaymentLink } from './dealer-payment-products.js';
 import { buildDealerCapabilityCard, buildScoutReport, createDealRequestTicket } from './dealer-native-product.js';
 import { buildDealarBrandSystem } from './dealar-brand.js';
+import { buildDealarSkillManifest } from './dealar-skill-system.js';
 
 const escapeHtml = (value) => String(value ?? '')
   .replaceAll('&', '&amp;')
@@ -22,6 +23,7 @@ export function buildDashboardModel({
   apiBaseUrl = process.env.DEALAR_API_BASE_URL || 'http://127.0.0.1:8787',
 } = {}) {
   const brandSystem = buildDealarBrandSystem();
+  const skillManifest = buildDealarSkillManifest({ baseUrl: apiBaseUrl });
   const whoop = searchDeals({ query: 'whoop', regions: ['us', 'eu'] });
   const retailers = listRetailers({ category: 'beauty', markets: ['us', 'eu'] });
   const gatewayTrace = buildGatewayTraceModel({
@@ -123,6 +125,7 @@ export function buildDashboardModel({
     scoutReport,
     dealRequestTicket,
     dealerCapabilityCard,
+    skillManifest,
     runtimeIntegrations: [
       { name: 'JSON CLI Bridge', command: 'npm run cli -- {"action":"deal.search","params":{"query":"whoop"}}', status: 'live' },
       { name: 'Hermes Plugin', command: 'dealar_search_deals(query="whoop", regions="us,eu")', status: 'scaffolded' },
@@ -275,6 +278,22 @@ export function renderDashboardHtml(model = buildDashboardModel()) {
       <p><span class="muted">Trust score:</span> <code>${escapeHtml(model.scoutReport.trustScore.score)}/100 ${escapeHtml(model.scoutReport.trustScore.level)}</code></p>
       <p><span class="muted">Scout endpoint:</span> <code>${escapeHtml(model.dealerCapabilityCard.links.scoutReport)}</code></p>
       <p class="muted">x402/USDC remains protocol compatibility for paid unlocks; Dealer product language stays Deal Request Ticket → Scout Report → Deal Receipt.</p>
+    </div>
+  </section>
+
+  <section class="sections">
+    <div class="panel">
+      <h2>Dealar Skill System</h2>
+      <p class="muted">Circle skills principle translated into Dealar-native agent skills: narrow triggers, clear artifacts, read-only checks separated from paid/value-moving actions.</p>
+      <table><thead><tr><th>Skill</th><th>Artifact</th><th>Policy</th></tr></thead><tbody>
+      ${model.skillManifest.skills.map((skill) => `<tr><td>${escapeHtml(skill.name)}<br><span class="muted">${escapeHtml(skill.intent)}</span></td><td>${escapeHtml(skill.outputArtifact)}</td><td><code>${escapeHtml(skill.paymentPolicy)}</code></td></tr>`).join('')}
+      </tbody></table>
+      <p class="muted">Manifest: <code>${escapeHtml(model.skillManifest.endpoints.skillManifest)}</code></p>
+    </div>
+    <div class="panel">
+      <h2>Skill Safety Guardrails</h2>
+      <div class="flow">${model.skillManifest.referencePrinciples.map((principle) => `<div>${escapeHtml(principle)}</div>`).join('')}</div>
+      <p class="muted">Never auto-execute: ${model.skillManifest.activationPolicy.neverAutoExecute.map((item) => `<code>${escapeHtml(item)}</code>`).join(' ')}</p>
     </div>
   </section>
 

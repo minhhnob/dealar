@@ -4,6 +4,7 @@ import { listMarketplaceServices } from './service-catalog.js';
 import { listDealerSources } from './dealer-scout.js';
 import { buildDealerMarketplaceListing, buildPaymentProducts } from './dealer-payment-products.js';
 import { buildDealerCapabilityCard } from './dealer-native-product.js';
+import { buildDealarSkillManifest } from './dealar-skill-system.js';
 
 export function buildAgentCard({
   baseUrl = process.env.DEALAR_API_BASE_URL || 'https://prodeal-api.vercel.app',
@@ -16,6 +17,7 @@ export function buildAgentCard({
   const paymentProducts = buildPaymentProducts({ baseUrl: normalizedBase });
   const marketplaceListing = buildDealerMarketplaceListing({ baseUrl: normalizedBase });
   const capabilityCard = buildDealerCapabilityCard({ baseUrl: normalizedBase });
+  const skillManifest = buildDealarSkillManifest({ baseUrl: normalizedBase });
 
   return {
     name: 'Dealar',
@@ -55,9 +57,11 @@ export function buildAgentCard({
       'gateway-payment-trace',
       'telegram-production-check',
       'loom-agent-registration-ready',
+      'circle-skills-inspired-agent-skill-system',
     ],
     services,
     capabilityCard,
+    skillManifest,
     dealerScout: {
       sources: dealerSources,
       endpoints: [`${normalizedBase}/v1/dealer/search`, `${normalizedBase}/v1/dealer/quote`, `${normalizedBase}/v1/dealer/coupons`, `${normalizedBase}/v1/dealer/deep-report`],

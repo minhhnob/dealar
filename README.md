@@ -484,6 +484,34 @@
    484|   484|
    485|
    486|
+## Dealar skill system
+
+Dealar now includes a `/v1/scout/skills` manifest inspired by Circle's public skill-catalog principles and translated into Dealar-native shopping workflows.
+
+Reference principle learned from `circlefin/skills`:
+
+- split broad agent behavior into narrow skills with explicit triggers
+- separate read-only checks from value-moving actions
+- treat paid APIs as discoverable services: discover → inspect → pay → receive → receipt
+- require user confirmation for sensitive wallet/payment-policy changes
+- keep wallet setup, funding, spending policy, and paid service calls as separate flows
+
+Dealar-native translation:
+
+- `Deal Request Ticket`
+- `Scout Report`
+- `Payment Safety Policy`
+- `Wallet Readiness Check`
+- `Price Watch Alert`
+
+Endpoint:
+
+```text
+GET /v1/scout/skills
+```
+
+Guardrail: Dealar uses Circle skills as operating principles only. Product language and artifacts stay Dealar-native.
+
 ## Dealer corrected product target
 
 Dealer is an original AI Deal Scout Agent, not a one-to-one implementation of any reference project.

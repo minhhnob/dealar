@@ -13,6 +13,11 @@ test('server exposes Dealer-native scout routes for corrected product target', a
     assert.equal(capabilities.card.type, 'Dealer Capability Card');
     assert.ok(capabilities.card.capabilities.some((item) => item.id === 'scout.report'));
 
+    const skills = await fetch(`${baseUrl}/v1/scout/skills`).then((res) => res.json());
+    assert.equal(skills.manifest.name, 'Dealar Skill System');
+    assert.ok(skills.manifest.skills.some((item) => item.id === 'dealar.payment.policy'));
+    assert.match(skills.telegramSummary, /Deal Request Ticket/);
+
     const report = await fetch(`${baseUrl}/v1/scout/report?query=Dyson%20Airwrap`).then((res) => res.json());
     assert.equal(report.type, 'Scout Report');
     assert.equal(report.query, 'Dyson Airwrap');

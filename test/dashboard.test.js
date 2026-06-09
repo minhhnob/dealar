@@ -29,6 +29,8 @@ test('renderDashboardHtml returns complete HTML with key Dealar dashboard sectio
   assert.match(html, /Dealer Capability Card/i);
   assert.match(html, /Scout Report/i);
   assert.match(html, /Brand System/i);
+  assert.match(html, /Dealar Skill System/i);
+  assert.match(html, /Skill Safety Guardrails/i);
   assert.match(html, /#CC6437/i);
   assert.match(html, /WHOOP Official/);
   assert.match(html, /Wallet Policy/i);

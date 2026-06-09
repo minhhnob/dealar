@@ -23,6 +23,7 @@ import {
   createDealRequestTicket,
 } from './dealer-native-product.js';
 import { buildDealarLogoSvg } from './dealar-brand.js';
+import { buildDealarSkillManifest, formatDealarSkillTelegramSummary } from './dealar-skill-system.js';
 import { renderDashboardHtml } from './dashboard.js';
 import { buildGatewayRoutePrices, getGatewayEnvironment } from './gateway-config.js';
 import { buildGatewayTraceModel, fetchGatewaySettlement, resolveGatewayBatchTx } from './gateway-trace.js';
@@ -130,6 +131,12 @@ export async function createApp() {
   app.get('/v1/scout/capabilities', (req, res) => {
     const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
     res.json({ card: buildDealerCapabilityCard({ baseUrl }) });
+  });
+
+  app.get('/v1/scout/skills', (req, res) => {
+    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const manifest = buildDealarSkillManifest({ baseUrl });
+    res.json({ manifest, telegramSummary: formatDealarSkillTelegramSummary(manifest) });
   });
 
   app.get('/v1/scout/report', (req, res) => {
