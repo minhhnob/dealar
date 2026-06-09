@@ -40,9 +40,10 @@ test('server exposes Dealer-native scout routes for corrected product target', a
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: { message_id: 7, text: '/start', chat: { id: 99 }, from: { id: 42 } } }),
     }).then((res) => {
-      assert.equal(res.status, 500);
+      assert.equal(res.status, 200);
       return res.json();
     });
+    assert.equal(webhookMissingToken.ok, true);
     assert.equal(webhookMissingToken.delivery.error, 'missing_telegram_bot_token');
 
     const report = await fetch(`${baseUrl}/v1/scout/report?query=Dyson%20Airwrap`).then((res) => res.json());

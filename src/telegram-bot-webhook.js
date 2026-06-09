@@ -22,7 +22,6 @@ export function buildTelegramSendMessagePayload({ chatId, text, replyToMessageId
   return {
     chat_id: chatId,
     text,
-    parse_mode: 'HTML',
     disable_web_page_preview: false,
     ...(replyToMessageId ? { reply_to_message_id: replyToMessageId } : {}),
   };
@@ -61,7 +60,7 @@ export async function handleTelegramWebhook({ update = {}, baseUrl = 'https://pr
     fetchImpl,
   });
 
-  return { ok: delivery.ok, incoming, answer, delivery };
+  return { ok: true, incoming, answer, delivery };
 }
 
 export function buildTelegramWebhookSetup({ baseUrl = 'https://prodeal-api.vercel.app', secretTokenConfigured = false, botTokenConfigured = Boolean(getBotToken()) } = {}) {

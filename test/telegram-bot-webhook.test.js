@@ -31,7 +31,7 @@ test('buildTelegramSendMessagePayload creates Bot API payload', () => {
 
   assert.equal(payload.chat_id, 99);
   assert.equal(payload.text, 'hello');
-  assert.equal(payload.parse_mode, 'HTML');
+  assert.equal(payload.parse_mode, undefined);
   assert.equal(payload.reply_to_message_id, 9);
 });
 
@@ -65,13 +65,13 @@ test('handleTelegramWebhook answers and sends message through injected fetch', a
   assert.match(sent.text, /Báo giá Dealar/);
 });
 
-test('handleTelegramWebhook reports skipped delivery when bot token is missing', async () => {
+test('handleTelegramWebhook acknowledges Telegram even when delivery is skipped', async () => {
   const result = await handleTelegramWebhook({
     token: '',
     update: { message: { text: '/start', chat: { id: 99 }, from: { id: 42 } } },
   });
 
-  assert.equal(result.ok, false);
+  assert.equal(result.ok, true);
   assert.equal(result.delivery.error, 'missing_telegram_bot_token');
 });
 
