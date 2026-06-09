@@ -30,6 +30,21 @@ test('server exposes Dealer-native scout routes for corrected product target', a
     assert.equal(telegramAnswer.ok, true);
     assert.match(telegramAnswer.message, /Dealer check/);
 
+    const webhookSetup = await fetch(`${baseUrl}/v1/telegram/webhook/setup`).then((res) => res.json());
+    assert.equal(webhookSetup.ok, true);
+    assert.equal(webhookSetup.setup.webhookUrl, `${baseUrl}/v1/telegram/webhook`);
+    assert.equal(webhookSetup.setup.network.caip2, 'eip155:5042002');
+
+    const webhookMissingToken = await fetch(`${baseUrl}/v1/telegram/webhook`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: { message_id: 7, text: '/start', chat: { id: 99 }, from: { id: 42 } } }),
+    }).then((res) => {
+      assert.equal(res.status, 500);
+      return res.json();
+    });
+    assert.equal(webhookMissingToken.delivery.error, 'missing_telegram_bot_token');
+
     const report = await fetch(`${baseUrl}/v1/scout/report?query=Dyson%20Airwrap`).then((res) => res.json());
     assert.equal(report.type, 'Scout Report');
     assert.equal(report.query, 'Dyson Airwrap');

@@ -30,6 +30,7 @@ import { buildGatewayTraceModel, fetchGatewaySettlement, resolveGatewayBatchTx }
 import { createDemoReceiptLedger, getPaymentReceipt, summarizePaymentLedger } from './payment-ledger.js';
 import { listMarketplaceServices, summarizeMarketplaceServices } from './service-catalog.js';
 import { answerTelegramDealRequest, buildTelegramSetupGuide } from './telegram-agent.js';
+import { buildTelegramWebhookSetup, handleTelegramWebhook } from './telegram-bot-webhook.js';
 import { buildX402RouteConfig, getX402Environment } from './x402-config.js';
 
 const PORT = Number(process.env.PORT || 8787);
@@ -139,6 +140,25 @@ export async function createApp() {
     const text = req.body?.message?.text || req.body?.text || req.body?.query || '';
     const userId = req.body?.message?.from?.id || req.body?.userId || 'telegram-user';
     res.json(answerTelegramDealRequest({ text, baseUrl, userId }));
+  });
+
+  app.get('/v1/telegram/webhook/setup', (req, res) => {
+    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    res.json({ ok: true, setup: buildTelegramWebhookSetup({
+      baseUrl,
+      botTokenConfigured: Boolean(process.env.DEALAR_TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN),
+      secretTokenConfigured: Boolean(process.env.DEALAR_TELEGRAM_WEBHOOK_SECRET),
+    }) });
+  });
+
+  app.post('/v1/telegram/webhook', async (req, res) => {
+    const expectedSecret = process.env.DEALAR_TELEGRAM_WEBHOOK_SECRET;
+    if (expectedSecret && req.get('X-Telegram-Bot-Api-Secret-Token') !== expectedSecret) {
+      return res.status(401).json({ ok: false, error: 'invalid_telegram_webhook_secret' });
+    }
+    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const result = await handleTelegramWebhook({ update: req.body || {}, baseUrl });
+    return res.status(result.ok ? 200 : 500).json(result);
   });
 
   app.get('/v1/scout/capabilities', (req, res) => {

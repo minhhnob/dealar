@@ -154,11 +154,13 @@ Keep real wallet addresses, keys, and deployment secrets outside source code.
 
 ## Telegram agent setup
 
-Dealar now exposes a Telegram-ready agent endpoint. A Telegram bot or Hermes webhook wrapper can forward user messages here and send the returned `message` field back to the chat.
+Dealar now exposes both a Telegram-ready agent endpoint and a real Telegram Bot webhook. A Telegram bot can receive user messages, call the Dealar agent brain, and send the returned result back to the Telegram chat.
 
 ```text
 GET  /v1/telegram/dealar-agent/health
 POST /v1/telegram/dealar-agent
+GET  /v1/telegram/webhook/setup
+POST /v1/telegram/webhook
 ```
 
 Example request:
@@ -196,6 +198,29 @@ Network target remains Arc Testnet:
 ```text
 Arc Testnet / eip155:5042002
 ```
+
+To connect a real Telegram bot:
+
+1. Create a bot with BotFather and copy the bot token.
+2. Set production env vars:
+
+```bash
+vercel env add DEALAR_TELEGRAM_BOT_TOKEN production
+vercel env add DEALAR_TELEGRAM_WEBHOOK_SECRET production
+```
+
+3. Register the webhook:
+
+```bash
+curl -X POST "https://api.telegram.org/bot$DEALAR_TELEGRAM_BOT_TOKEN/setWebhook" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "url":"https://prodeal-api.vercel.app/v1/telegram/webhook",
+    "secret_token":"YOUR_SECRET"
+  }'
+```
+
+4. Users can then message the bot directly. The webhook sends back Dealar's Telegram-ready deal result.
 
 ## Main API routes
 
