@@ -1,7 +1,7 @@
-import { searchDealerCoupons, searchDealerDeals, quoteProduct } from './dealer-scout.js';
+import { DEFAULT_DEALER_SOURCES, searchDealerCoupons, searchDealerDeals, quoteProduct } from './dealer-scout.js';
 import { buildScoutReport, createDealRequestTicket } from './dealer-native-product.js';
 
-const DEFAULT_SOURCES = ['amazon', 'ebay', 'sephora', 'slickdeals'];
+const DEFAULT_SOURCES = DEFAULT_DEALER_SOURCES;
 
 function normalizeText(text) {
   return String(text || '').trim();
@@ -33,8 +33,8 @@ function helpMessage(baseUrl) {
     'Sếp/user có thể hỏi tự nhiên, ví dụ:',
     '• săn deal Dyson Airwrap dưới 350$',
     '• check giá iPhone 15 Pro Max',
-    '• tìm voucher Sephora skincare',
-    '• so sánh Dior Sauvage Amazon eBay Sephora',
+    '• tìm voucher WHOOP hôm nay',
+    '• so sánh WHOOP Amazon eBay Slickdeals',
     '',
     'Lệnh nhanh:',
     '/deal <sản phẩm>',
@@ -130,7 +130,7 @@ export function buildTelegramSetupGuide({ baseUrl = 'https://prodeal-api.vercel.
     supportedMessages: [
       'săn deal Dyson Airwrap dưới 350$',
       'check giá iPhone 15 Pro Max',
-      'tìm voucher Sephora skincare',
+      'tìm voucher WHOOP hôm nay',
       '/scout Dior Sauvage',
       '/ticket Dyson Airwrap',
     ],

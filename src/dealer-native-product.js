@@ -1,4 +1,4 @@
-import { buildTelegramDealSummary, quoteProduct, searchDealerCoupons, searchDealerDeals } from './dealer-scout.js';
+import { DEFAULT_DEALER_SOURCES, buildTelegramDealSummary, quoteProduct, searchDealerCoupons, searchDealerDeals } from './dealer-scout.js';
 
 const normalizeBaseUrl = (baseUrl = 'https://prodeal-api.vercel.app') => String(baseUrl).replace(/\/$/, '');
 
@@ -72,10 +72,10 @@ function buildTrustScore(search, quote) {
   };
 }
 
-export function buildScoutReport({ query = 'Dyson Airwrap', sources = ['amazon', 'ebay', 'sephora', 'slickdeals'], baseUrl = 'https://prodeal-api.vercel.app' } = {}) {
+export function buildScoutReport({ query = 'Dyson Airwrap', sources = DEFAULT_DEALER_SOURCES, baseUrl = 'https://prodeal-api.vercel.app' } = {}) {
   const search = searchDealerDeals({ query, sources });
   const priceQuote = quoteProduct({ query, sources });
-  const voucherScan = searchDealerCoupons({ query, source: 'sephora' });
+  const voucherScan = searchDealerCoupons({ query });
   if (voucherScan.coupons.length === 0) {
     const bestCoupon = search.bestDeal?.couponCode;
     voucherScan.coupons = [{

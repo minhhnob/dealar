@@ -23,7 +23,7 @@ test('answerTelegramDealRequest handles natural-language deal hunting', () => {
 });
 
 test('answerTelegramDealRequest handles voucher, quote, scout, and ticket intents', () => {
-  const voucher = answerTelegramDealRequest({ text: 'tìm voucher Sephora skincare' });
+  const voucher = answerTelegramDealRequest({ text: 'tìm voucher WHOOP hôm nay' });
   assert.equal(voucher.intent, 'coupon');
   assert.match(voucher.message, /Dealer coupons/);
 

@@ -1,5 +1,5 @@
 import { listRetailers, searchDeals, verifyCoupon } from './deal-intelligence.js';
-import { buildTelegramDealSummary, listDealerSources, quoteProduct, searchDealerCoupons, searchDealerDeals } from './dealer-scout.js';
+import { DEFAULT_DEALER_SOURCES, buildTelegramDealSummary, listDealerSources, quoteProduct, searchDealerCoupons, searchDealerDeals } from './dealer-scout.js';
 import { buildAgentCard, buildProductionCheck } from './agent-card.js';
 import { createAgentWalletPolicy } from './agent-wallet-policy.js';
 import { buildDashboardModel } from './dashboard.js';
@@ -42,7 +42,7 @@ export async function executeCliAction(payload) {
       case 'dealer.search': {
         const result = searchDealerDeals({
           query: params.query || 'Dior Sauvage',
-          sources: params.sources || ['amazon', 'ebay', 'sephora', 'slickdeals'],
+          sources: params.sources || DEFAULT_DEALER_SOURCES,
           region: params.region || 'us',
         });
         return { ok: true, result };
@@ -52,7 +52,7 @@ export async function executeCliAction(payload) {
       case 'dealer.coupons':
         return { ok: true, result: searchDealerCoupons({ query: params.query || '', source: params.source }) };
       case 'dealer.telegram': {
-        const result = searchDealerDeals({ query: params.query || 'Dior Sauvage', sources: params.sources || ['amazon', 'ebay', 'sephora', 'slickdeals'] });
+        const result = searchDealerDeals({ query: params.query || 'Dior Sauvage', sources: params.sources || DEFAULT_DEALER_SOURCES });
         return { ok: true, result: { message: buildTelegramDealSummary(result), search: result } };
       }
       case 'coupon.verify':

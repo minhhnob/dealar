@@ -21,7 +21,7 @@ test('server exposes Conduit-style Dealer paid product routes', async () => {
     const paymentLink = await fetch(`${baseUrl}/v1/dealer/payment-links`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: 'Sephora skincare', productId: 'dealer.deep-deal-report' }),
+      body: JSON.stringify({ query: 'WHOOP 5.0', productId: 'dealer.deep-deal-report' }),
     }).then((res) => {
       assert.equal(res.status, 201);
       return res.json();

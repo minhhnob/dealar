@@ -42,7 +42,7 @@ test('buildDeepDealReport returns Telegram-ready paid report metadata', () => {
 
 test('createDealerPaymentLink creates deterministic Conduit-style payment link record', () => {
   const link = createDealerPaymentLink({
-    query: 'Sephora skincare',
+    query: 'WHOOP 5.0',
     productId: 'dealer.deep-deal-report',
     baseUrl: 'https://prodeal-api.vercel.app',
   });
@@ -52,7 +52,7 @@ test('createDealerPaymentLink creates deterministic Conduit-style payment link r
   assert.equal(link.amount.usdc, '0.005');
   assert.equal(link.status, 'demo_unpaid');
   assert.ok(link.payUrl.startsWith('https://prodeal-api.vercel.app/pay/dealer-'));
-  assert.ok(link.unlockUrl.includes('/v1/dealer/deep-report?query=Sephora%20skincare'));
+  assert.ok(link.unlockUrl.includes('/v1/dealer/deep-report?query=WHOOP%205.0'));
   assert.ok(links.some((item) => item.id === link.id));
 });
 

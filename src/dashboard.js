@@ -39,7 +39,7 @@ export function buildDashboardModel({
   const serviceSummary = summarizeMarketplaceServices(services);
   const receiptLedger = createDemoReceiptLedger();
   const ledgerSummary = summarizePaymentLedger(receiptLedger);
-  const dealerSearch = searchDealerDeals({ query: 'Dior Sauvage', sources: ['amazon', 'ebay', 'sephora', 'slickdeals'] });
+  const dealerSearch = searchDealerDeals({ query: 'WHOOP 5.0', sources: ['amazon', 'ebay', 'slickdeals'] });
   const dealerQuote = quoteProduct({ query: 'Dyson Airwrap' });
   const dealerSources = listDealerSources();
   const dealerTelegramSummary = buildTelegramDealSummary(dealerSearch);
@@ -209,10 +209,10 @@ export function renderDashboardHtml(model = buildDashboardModel()) {
   <section class="hero">
     <div class="panel hero-main">
       <div>
-        <div class="eyebrow">Inspired by paid-resource clarity + Ciridae monochrome grid · transformed into Dealar-native scout UX</div>
+        <div class="eyebrow">Remote MCP commerce pattern · source-locked deal intelligence for agents</div>
         <h1>${escapeHtml(model.brand.name)}</h1>
         <p class="tagline">Precision deal scouting for agents: tickets, reports, vouchers, trust scores, receipts.</p>
-        <p class="muted">API base: <code>${escapeHtml(model.brand.apiBaseUrl)}</code></p>
+        <p class="muted">API base: <code>${escapeHtml(model.brand.apiBaseUrl)}</code> · MCP-style stateless HTTP endpoints</p>
       </div>
       <div>
         <span class="pill">● ${escapeHtml(model.payment.currency)}</span><span class="pill">${escapeHtml(model.payment.protocol)}</span><span class="pill accent">Scout Report Ready</span>
@@ -252,14 +252,14 @@ export function renderDashboardHtml(model = buildDashboardModel()) {
   <section class="sections">
     <div class="panel">
       <h2>Dealer Deal Scout</h2>
-      <p class="muted">Amazon + eBay + Sephora + Slickdeals price, sale, voucher, and risk comparison.</p>
+      <p class="muted">Amazon + eBay + Slickdeals price, sale, voucher, and risk comparison.</p>
       <div class="deal">
       ${model.dealerSearch.results.map((d) => `<div class="deal-card"><strong>${escapeHtml(d.retailer)}</strong> · $${escapeHtml(d.effectivePrice)} · <span class="score">${escapeHtml(Math.round(d.confidence * 100))}%</span><br><span class="muted">${escapeHtml(d.title)} · Coupon: ${escapeHtml(d.couponCode || 'none')} · Risk: ${escapeHtml(d.risk)}</span></div>`).join('')}
       </div>
     </div>
     <div class="panel">
       <h2>Telegram Check Preview</h2>
-      <p class="muted">Command: <code>check deal Dior Sauvage</code></p>
+      <p class="muted">Command: <code>check deal WHOOP 5.0</code></p>
       <pre style="white-space:pre-wrap;background:#0b1220;border:1px solid var(--line);border-radius:16px;padding:14px;color:#d1fae5">${escapeHtml(model.dealerTelegramSummary)}</pre>
       <p class="muted">Quote sample: Dyson Airwrap best price <code>${escapeHtml(model.dealerQuote.bestPrice.retailer)} $${escapeHtml(model.dealerQuote.bestPrice.effectivePrice)}</code>; safer option <code>${escapeHtml(model.dealerQuote.safestDeal.retailer)} $${escapeHtml(model.dealerQuote.safestDeal.effectivePrice)}</code>.</p>
     </div>

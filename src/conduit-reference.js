@@ -78,7 +78,7 @@ export function buildDealerConduitIntegrationPlan() {
         name: 'Quick Deal Check',
         endpoint: '/v1/dealer/search',
         priceUsdc: '0.001',
-        description: 'Amazon/eBay/Sephora/Slickdeals comparison with coupon-adjusted best deal.',
+        description: 'Amazon/eBay/Slickdeals comparison with coupon-adjusted best deal.',
       },
       {
         name: 'Product Quote',

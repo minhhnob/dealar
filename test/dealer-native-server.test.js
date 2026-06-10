@@ -59,7 +59,7 @@ test('server exposes Dealer-native scout routes for corrected product target', a
     const ticket = await fetch(`${baseUrl}/v1/scout/tickets`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: 'Sephora skincare', capabilityId: 'scout.report' }),
+      body: JSON.stringify({ query: 'WHOOP 5.0', capabilityId: 'scout.report' }),
     }).then((res) => {
       assert.equal(res.status, 201);
       return res.json();

@@ -45,7 +45,7 @@ export function buildAgentCard({
       'paid-deal-search',
       'amazon-price-check',
       'ebay-price-check',
-      'sephora-sale-voucher-check',
+      'slickdeals-voucher-watch',
       'slickdeals-community-validation',
       'telegram-deal-scout',
       'conduit-payment-links',

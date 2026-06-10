@@ -18,7 +18,7 @@ export function buildPaymentProducts({ baseUrl = 'https://prodeal-api.vercel.app
     {
       id: 'dealer.quick-deal-check',
       name: 'Quick Deal Check',
-      description: 'Amazon/eBay/Sephora/Slickdeals comparison with coupon-adjusted best deal.',
+      description: 'Amazon/eBay/Slickdeals comparison with coupon-adjusted best deal.',
       endpoint: `${normalizedBase}/v1/dealer/search`,
       method: 'GET',
       price: { usdc: '0.001', atomicUnits: '1000' },
@@ -62,7 +62,7 @@ export function buildDeepDealReport({ query = 'Dyson Airwrap', sources, baseUrl 
   const product = getPaymentProduct('dealer.deep-deal-report', { baseUrl });
   const search = searchDealerDeals({ query, sources });
   const quote = quoteProduct({ query, sources });
-  const coupons = searchDealerCoupons({ query, source: 'sephora' });
+  const coupons = searchDealerCoupons({ query, source: 'slickdeals' });
   const best = search.bestDeal;
   const coupon = best?.couponCode || coupons.coupons?.[0]?.code || 'n/a';
 
@@ -130,7 +130,7 @@ export function buildDealerMarketplaceListing({ baseUrl = 'https://prodeal-api.v
 
   return {
     name: 'Dealer Deep Deal Report',
-    description: 'AI deal scout for Amazon, eBay, Sephora, and Slickdeals with coupon-adjusted pricing, risk scoring, and Telegram-ready recommendations.',
+    description: 'AI deal scout for Amazon, eBay, and Slickdeals with coupon-adjusted pricing, risk scoring, and Telegram-ready recommendations.',
     price: product.price.usdc,
     endpoint: product.endpoint,
     category: 'shopping-intelligence',

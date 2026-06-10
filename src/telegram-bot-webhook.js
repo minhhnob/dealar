@@ -75,7 +75,7 @@ export function buildTelegramWebhookSetup({ baseUrl = 'https://prodeal-api.verce
     supportedMessages: [
       'săn deal Dyson Airwrap dưới 350$',
       'check giá iPhone 15 Pro Max',
-      'tìm voucher Sephora skincare',
+      'tìm voucher WHOOP hôm nay',
       '/scout Dior Sauvage',
       '/ticket Dyson Airwrap',
     ],

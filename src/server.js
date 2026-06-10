@@ -246,7 +246,7 @@ export async function createApp() {
   app.get('/v1/dealer/search', (req, res) => {
     res.json(searchDealerDeals({
       query: req.query.query || 'Dior Sauvage',
-      sources: parseListParam(req.query.sources, ['amazon', 'ebay', 'sephora', 'slickdeals']),
+      sources: parseListParam(req.query.sources, ['amazon', 'ebay', 'slickdeals']),
       region: req.query.region || 'us',
     }));
   });
