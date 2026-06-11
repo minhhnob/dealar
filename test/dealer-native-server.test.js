@@ -33,7 +33,7 @@ test('server exposes Dealer-native scout routes for corrected product target', a
       body: JSON.stringify({ text: 'săn deal Dyson Airwrap dưới 350$' }),
     }).then((res) => res.json());
     assert.equal(telegramAnswer.ok, true);
-    assert.match(telegramAnswer.message, /Dealer check/);
+    assert.match(telegramAnswer.message, /Dealar Slickdeals check/);
 
     const webhookSetup = await fetch(`${baseUrl}/v1/telegram/webhook/setup`).then((res) => res.json());
     assert.equal(webhookSetup.ok, true);

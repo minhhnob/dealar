@@ -18,8 +18,19 @@ test('answerTelegramDealRequest handles natural-language deal hunting', () => {
   assert.equal(answer.ok, true);
   assert.equal(answer.intent, 'deal');
   assert.match(answer.query, /Dyson Airwrap/i);
-  assert.match(answer.message, /Dealer check/i);
-  assert.ok(answer.artifacts.some((artifact) => artifact.type === 'Deal Search'));
+  assert.match(answer.message, /Dealar Slickdeals check/i);
+  assert.ok(answer.artifacts.some((artifact) => artifact.type === 'Slickdeals Watchlist'));
+});
+
+test('answerTelegramDealRequest does not return Amazon iPhone 15 data for iPhone 17 sale checks', () => {
+  const answer = answerTelegramDealRequest({ text: 'check sale iphone 17 hôm nay' });
+
+  assert.equal(answer.ok, true);
+  assert.equal(answer.intent, 'deal');
+  assert.match(answer.query, /iphone 17/i);
+  assert.match(answer.message, /Dealar Slickdeals check/i);
+  assert.doesNotMatch(answer.message, /iPhone 15 Pro Max/i);
+  assert.doesNotMatch(answer.message, /Amazon — \$849\.99/i);
 });
 
 test('answerTelegramDealRequest handles voucher, quote, scout, and ticket intents', () => {

@@ -1,5 +1,6 @@
 import { DEFAULT_DEALER_SOURCES, searchDealerCoupons, searchDealerDeals, quoteProduct } from './dealer-scout.js';
 import { buildScoutReport, createDealRequestTicket } from './dealer-native-product.js';
+import { listDeals } from './slickdeals-alerts.js';
 
 const DEFAULT_SOURCES = DEFAULT_DEALER_SOURCES;
 
@@ -10,9 +11,11 @@ function normalizeText(text) {
 function extractQuery(text) {
   const value = normalizeText(text)
     .replace(/^\/(start|help|deal|scout|quote|coupon|voucher|ticket)\b/i, '')
-    .replace(/^(săn deal|san deal|tìm deal|tim deal|check deal|check giá|check gia|báo giá|bao gia|tìm voucher|tim voucher)\s*/i, '')
+    .replace(/^(săn deal|san deal|tìm deal|tim deal|check deal|check sale|check giá|check gia|báo giá|bao gia|tìm voucher|tim voucher)\s*/i, '')
+    .replace(/\b(hôm nay|hom nay|today|sale|deal|giá|gia)\b/gi, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
-  return value || 'Dyson Airwrap';
+  return value || 'Slickdeals frontpage';
 }
 
 function detectIntent(text) {
@@ -44,6 +47,33 @@ function helpMessage(baseUrl) {
     '/ticket <sản phẩm>',
     '',
     `Dashboard: ${baseUrl}/dashboard`,
+  ].join('\n');
+}
+
+function formatSlickdealsCheck(query, deals, baseUrl) {
+  const best = deals[0];
+  if (!best) {
+    return [
+      `⚠️ Dealar Slickdeals check: ${query}`,
+      '',
+      'No exact Slickdeals deal found in the current watchlist.',
+      `Watchlist: ${baseUrl}/v1/deals?query=${encodeURIComponent(query)}`,
+      `Search Slickdeals: https://slickdeals.net/newsearch.php?q=${encodeURIComponent(query)}`,
+      '',
+      'Em sẽ chỉ báo khi có deal khớp filter thay vì trả dữ liệu Amazon/eBay không đúng scope.',
+    ].join('\n');
+  }
+
+  return [
+    `🔥 Dealar Slickdeals check: ${query}`,
+    '',
+    `Best Slickdeals deal: ${best.title}`,
+    `Merchant: ${best.merchant || 'Slickdeals'}`,
+    `Price: ${best.price != null ? `$${best.price}` : 'unknown'}`,
+    `Thumb score: +${best.thumb_score ?? 0}`,
+    `Link: ${best.url}`,
+    '',
+    `API: ${baseUrl}/v1/deals?query=${encodeURIComponent(query)}`,
   ].join('\n');
 }
 
@@ -117,8 +147,9 @@ export function answerTelegramDealRequest({ text = '', baseUrl = 'https://prodea
     return { ok: true, intent, query, message: formatScoutReport(report), artifacts: [{ type: 'Scout Report', data: report }] };
   }
 
-  const result = searchDealerDeals({ query, sources: DEFAULT_SOURCES, region: 'us' });
-  return { ok: true, intent: 'deal', query, message: result.telegramSummary, artifacts: [{ type: 'Deal Search', data: result }] };
+  const deals = listDeals({ query, limit: 5 });
+  const message = formatSlickdealsCheck(query, deals, baseUrl);
+  return { ok: true, intent: 'deal', query, message, artifacts: [{ type: 'Slickdeals Watchlist', data: { query, deals } }] };
 }
 
 export function buildTelegramSetupGuide({ baseUrl = 'https://prodeal-api.vercel.app' } = {}) {
