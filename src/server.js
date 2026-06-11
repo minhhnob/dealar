@@ -57,6 +57,13 @@ const parseListParam = (value, fallback) => {
 
 const isDemoPaid = (req) => Boolean(req.headers['x-dealar-paid'] || req.headers['x-payment-proof']);
 
+function getRequestBaseUrl(req) {
+  if (process.env.DEALAR_API_BASE_URL) return process.env.DEALAR_API_BASE_URL;
+  const proto = req.get('x-forwarded-proto') || req.protocol || 'https';
+  const host = req.get('x-forwarded-host') || req.get('host');
+  return `${proto}://${host}`;
+}
+
 async function maybeCreatePaymentMiddleware() {
   const mode = String(process.env.DEALAR_PAYMENT_MODE || 'demo').toLowerCase();
 
@@ -178,13 +185,13 @@ export async function createApp() {
 
   app.get('/v1/agent-card', (req, res) => {
     res.json(buildAgentCard({
-      baseUrl: process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`,
+      baseUrl: getRequestBaseUrl(req),
     }));
   });
 
   app.get('/v1/check', (req, res) => {
     res.json(buildProductionCheck({
-      baseUrl: process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`,
+      baseUrl: getRequestBaseUrl(req),
     }));
   });
 
@@ -198,19 +205,19 @@ export async function createApp() {
   });
 
   app.get('/v1/telegram/dealar-agent/health', (req, res) => {
-    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const baseUrl = getRequestBaseUrl(req);
     res.json({ ok: true, setup: buildTelegramSetupGuide({ baseUrl }) });
   });
 
   app.post('/v1/telegram/dealar-agent', (req, res) => {
-    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const baseUrl = getRequestBaseUrl(req);
     const text = req.body?.message?.text || req.body?.text || req.body?.query || '';
     const userId = req.body?.message?.from?.id || req.body?.userId || 'telegram-user';
     res.json(answerTelegramDealRequest({ text, baseUrl, userId }));
   });
 
   app.get('/v1/telegram/webhook/setup', (req, res) => {
-    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const baseUrl = getRequestBaseUrl(req);
     res.json({ ok: true, setup: buildTelegramWebhookSetup({
       baseUrl,
       botTokenConfigured: Boolean(process.env.DEALAR_TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN),
@@ -223,30 +230,30 @@ export async function createApp() {
     if (expectedSecret && req.get('X-Telegram-Bot-Api-Secret-Token') !== expectedSecret) {
       return res.status(401).json({ ok: false, error: 'invalid_telegram_webhook_secret' });
     }
-    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const baseUrl = getRequestBaseUrl(req);
     const result = await handleTelegramWebhook({ update: req.body || {}, baseUrl });
     return res.status(result.ok ? 200 : 500).json(result);
   });
 
   app.get('/v1/scout/capabilities', (req, res) => {
-    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const baseUrl = getRequestBaseUrl(req);
     res.json({ card: buildDealerCapabilityCard({ baseUrl }) });
   });
 
   app.get('/v1/scout/skills', (req, res) => {
-    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const baseUrl = getRequestBaseUrl(req);
     const manifest = buildDealarSkillManifest({ baseUrl });
     res.json({ manifest, telegramSummary: formatDealarSkillTelegramSummary(manifest) });
   });
 
   app.get('/v1/scout/mcp-readiness', (req, res) => {
-    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const baseUrl = getRequestBaseUrl(req);
     const plan = buildDealarMcpReadiness({ baseUrl });
     res.json({ plan, telegramSummary: formatMcpReadinessTelegramSummary(plan) });
   });
 
   app.get('/v1/scout/report', (req, res) => {
-    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const baseUrl = getRequestBaseUrl(req);
     res.json(buildScoutReport({
       query: req.query.query || 'Dyson Airwrap',
       sources: req.query.sources ? String(req.query.sources).split(',') : undefined,
@@ -255,7 +262,7 @@ export async function createApp() {
   });
 
   app.post('/v1/scout/tickets', (req, res) => {
-    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const baseUrl = getRequestBaseUrl(req);
     res.status(201).json({ ticket: createDealRequestTicket({
       query: req.body?.query || 'Dyson Airwrap',
       capabilityId: req.body?.capabilityId || 'scout.report',
@@ -264,7 +271,7 @@ export async function createApp() {
   });
 
   app.get('/v1/scout/receipts', (req, res) => {
-    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const baseUrl = getRequestBaseUrl(req);
     const report = buildScoutReport({ query: req.query.query || 'Dyson Airwrap', baseUrl });
     res.json({ receipt: createDealReceipt({ report, amountUsdc: req.query.amount || '0.005', mode: process.env.DEALAR_PAYMENT_MODE || 'demo' }) });
   });
@@ -274,12 +281,12 @@ export async function createApp() {
   });
 
   app.get('/v1/dealer/payment-products', (req, res) => {
-    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const baseUrl = getRequestBaseUrl(req);
     res.json({ products: buildPaymentProducts({ baseUrl }) });
   });
 
   app.get('/v1/dealer/deep-report', (req, res) => {
-    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const baseUrl = getRequestBaseUrl(req);
     res.json(buildDeepDealReport({
       query: req.query.query || 'Dyson Airwrap',
       sources: req.query.sources ? String(req.query.sources).split(',') : undefined,
@@ -288,12 +295,12 @@ export async function createApp() {
   });
 
   app.get('/v1/dealer/payment-links', (req, res) => {
-    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const baseUrl = getRequestBaseUrl(req);
     res.json({ links: listDealerPaymentLinks({ baseUrl }) });
   });
 
   app.post('/v1/dealer/payment-links', (req, res) => {
-    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const baseUrl = getRequestBaseUrl(req);
     res.status(201).json({ link: createDealerPaymentLink({
       query: req.body?.query || 'Dyson Airwrap',
       productId: req.body?.productId || 'dealer.deep-deal-report',
@@ -302,7 +309,7 @@ export async function createApp() {
   });
 
   app.get('/v1/dealer/marketplace-listing', (req, res) => {
-    const baseUrl = process.env.DEALAR_API_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const baseUrl = getRequestBaseUrl(req);
     res.json({ listing: buildDealerMarketplaceListing({
       baseUrl,
       creatorAddress: req.query.creatorAddress || process.env.DEALAR_CREATOR_ADDRESS || '0x0000000000000000000000000000000000000000',
