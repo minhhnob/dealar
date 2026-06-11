@@ -25,9 +25,9 @@ test('renderDashboardHtml returns complete HTML with key Dealar dashboard sectio
 
   assert.match(html, /^<!doctype html>/i);
   assert.match(html, /Dealar/);
-  assert.match(html, /Precision deal scouting/i);
-  assert.match(html, /Dealer Capability Card/i);
-  assert.match(html, /Scout Report/i);
+  assert.match(html, /Bot canh sale Slickdeals/i);
+  assert.match(html, /Slickdeals Alert Pipeline/i);
+  assert.match(html, /Telegram Alert Queue/i);
   assert.match(html, /Brand System/i);
   assert.match(html, /Dealar Skill System/i);
   assert.match(html, /Skill Safety Guardrails/i);
@@ -35,5 +35,5 @@ test('renderDashboardHtml returns complete HTML with key Dealar dashboard sectio
   assert.match(html, /WHOOP Official/);
   assert.match(html, /Wallet Policy/i);
   assert.match(html, /Payment Flow/i);
-  assert.match(html, /Deal receipts/i);
+  assert.match(html, /Slickdeals deals/i);
 });

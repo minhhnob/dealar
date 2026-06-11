@@ -1,8 +1,8 @@
 # Dealar
 
-**AI Deal Scout Agent for cheap prices, sales, vouchers, product quotes, and paid Scout Reports.**
+**Bot canh sale Slickdeals cho sếp — sale alerts before the crowd.**
 
-Dealar is an agent-facing deal intelligence API. It helps buyer agents and Telegram workflows search retail sources, compare prices, scan vouchers, score trust, and optionally unlock deeper reports through demo/x402/Circle Gateway-compatible payment rails.
+Dealar now focuses on one clean job: turn Slickdeals into an automated sale-alert system. It collects Slickdeals-style feed items, normalizes deal records, filters good deals with alert rules, dedupes/stores them, queues Telegram-ready notifications, and exposes API/dashboard views.
 
 Production:
 
@@ -11,6 +11,44 @@ Production:
 - Scout Capabilities: https://prodeal-api.vercel.app/v1/scout/capabilities
 - Skill Manifest: https://prodeal-api.vercel.app/v1/scout/skills
 - Logo: https://prodeal-api.vercel.app/dealar-logo.svg
+
+---
+
+## Current MVP scope
+
+```text
+Slickdeals website
+→ source collector
+→ filter good deals
+→ dedupe/store database
+→ Telegram alert queue
+→ API/dashboard
+```
+
+Core endpoints:
+
+- `GET /v1/deals` — list stored Slickdeals deals.
+- `GET /v1/deals/:id` — get one normalized deal by external ID.
+- `GET /v1/alerts` / `POST /v1/alerts` / `PATCH /v1/alerts/:id` / `DELETE /v1/alerts/:id` — manage alert rules.
+- `POST /v1/slickdeals/poll` — run collector/filter/dedupe and queue matching Telegram-ready alerts.
+- `GET /v1/notifications` — inspect queued alert messages.
+- `GET /v1/slickdeals/summary` — dashboard-ready state summary.
+
+Normalized deal shape:
+
+```json
+{
+  "source": "slickdeals",
+  "external_id": "sd-demo-macbook-air-m2-599",
+  "title": "$599 MacBook Air M2 at Best Buy",
+  "url": "https://slickdeals.net/f/...",
+  "price": 599,
+  "merchant": "Best Buy",
+  "thumb_score": 38,
+  "image_url": "...",
+  "posted_at": "2026-06-11T09:00:00.000Z"
+}
+```
 
 ---
 

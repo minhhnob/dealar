@@ -1,7 +1,7 @@
 {
   "name": "dealar-api",
   "version": "0.1.0",
-  "description": "USDC-paywalled deal intelligence API MVP for AI agents.",
+  "description": "Slickdeals sale alert bot with deal filtering, dedupe, API, dashboard, and Telegram-ready notifications.",
   "type": "module",
   "private": true,
   "scripts": {

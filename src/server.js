@@ -25,6 +25,18 @@ import {
 import { buildDealarLogoSvg } from './dealar-brand.js';
 import { buildDealarSkillManifest, formatDealarSkillTelegramSummary } from './dealar-skill-system.js';
 import { renderDashboardHtml } from './dashboard.js';
+import {
+  createAlertRule,
+  deleteAlertRule,
+  getDeal,
+  getSlickdealsStateSummary,
+  listAlerts,
+  listDeals,
+  listNotifications,
+  pollSlickdealsDemo,
+  updateAlertRule,
+  upsertDeals,
+} from './slickdeals-alerts.js';
 import { buildGatewayRoutePrices, getGatewayEnvironment } from './gateway-config.js';
 import { buildGatewayTraceModel, fetchGatewaySettlement, resolveGatewayBatchTx } from './gateway-trace.js';
 import { createDemoReceiptLedger, getPaymentReceipt, summarizePaymentLedger } from './payment-ledger.js';
@@ -102,6 +114,60 @@ export async function createApp() {
 
   app.get('/dashboard', (req, res) => {
     res.type('html').send(renderDashboardHtml());
+  });
+
+  app.get('/v1/slickdeals/summary', (req, res) => {
+    res.json(getSlickdealsStateSummary());
+  });
+
+  app.get('/v1/deals', (req, res) => {
+    res.json({ deals: listDeals({
+      query: req.query.query,
+      merchant: req.query.merchant,
+      minThumbScore: req.query.minThumbScore,
+      maxPrice: req.query.maxPrice,
+      limit: req.query.limit || 50,
+    }) });
+  });
+
+  app.get('/v1/deals/:id', (req, res, next) => {
+    if (req.params.id === 'search') return next();
+    const deal = getDeal(req.params.id);
+    if (!deal) return res.status(404).json({ error: 'deal_not_found' });
+    return res.json({ deal });
+  });
+
+  app.post('/v1/slickdeals/poll', (req, res) => {
+    const result = pollSlickdealsDemo({ feed: req.body?.deals });
+    res.json(result);
+  });
+
+  app.post('/v1/slickdeals/deals', (req, res) => {
+    const result = upsertDeals(req.body?.deals || []);
+    res.status(201).json(result);
+  });
+
+  app.get('/v1/alerts', (req, res) => {
+    res.json({ alerts: listAlerts() });
+  });
+
+  app.post('/v1/alerts', (req, res) => {
+    res.status(201).json({ alert: createAlertRule(req.body || {}) });
+  });
+
+  app.patch('/v1/alerts/:id', (req, res) => {
+    const alert = updateAlertRule(req.params.id, req.body || {});
+    if (!alert) return res.status(404).json({ error: 'alert_not_found' });
+    return res.json({ alert });
+  });
+
+  app.delete('/v1/alerts/:id', (req, res) => {
+    if (!deleteAlertRule(req.params.id)) return res.status(404).json({ error: 'alert_not_found' });
+    return res.status(204).send();
+  });
+
+  app.get('/v1/notifications', (req, res) => {
+    res.json({ notifications: listNotifications({ status: req.query.status, limit: req.query.limit || 50 }) });
   });
 
   app.get('/dealar-logo.svg', (req, res) => {

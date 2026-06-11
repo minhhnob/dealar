@@ -1,3 +1,4 @@
+import { buildSlickdealsDashboardModel } from './slickdeals-alerts.js';
 import { listRetailers, searchDeals } from './deal-intelligence.js';
 import { createAgentWalletPolicy, formatUsdcAmount } from './agent-wallet-policy.js';
 import { buildGatewayTraceModel } from './gateway-trace.js';
@@ -24,6 +25,7 @@ export function buildDashboardModel({
   apiBaseUrl = process.env.DEALAR_API_BASE_URL || 'http://127.0.0.1:8787',
 } = {}) {
   const brandSystem = buildDealarBrandSystem();
+  const slickdeals = buildSlickdealsDashboardModel();
   const skillManifest = buildDealarSkillManifest({ baseUrl: apiBaseUrl });
   const mcpReadiness = buildDealarMcpReadiness({ baseUrl: apiBaseUrl });
   const whoop = searchDeals({ query: 'whoop', regions: ['us', 'eu'] });
@@ -78,7 +80,7 @@ export function buildDashboardModel({
     brand: {
       ...brandSystem,
       name: 'Dealar',
-      tagline: 'AI Deal Scout Agent for cheap prices, sales, vouchers, and product quotes',
+      tagline: 'Bot canh sale Slickdeals: lọc deal ngon, lưu database, gửi alert/API/dashboard',
       apiBaseUrl,
     },
     payment: {
@@ -103,7 +105,12 @@ export function buildDashboardModel({
       receipts: ledgerSummary.totalReceipts,
       dealerSources: dealerSources.length,
       bestDealerSource: dealerSearch.bestDeal?.retailer || 'n/a',
+      slickdealsDeals: slickdeals.metrics.deals,
+      slickdealsAlerts: slickdeals.metrics.alerts,
+      slickdealsNotifications: slickdeals.metrics.notifications,
+      slickdealsHotDeals: slickdeals.metrics.hotDeals,
     },
+    slickdeals,
     endpoints,
     requestLogs,
     dealReport: whoop,
@@ -140,10 +147,10 @@ export function buildDashboardModel({
 
 export function renderDashboardHtml(model = buildDashboardModel()) {
   const cards = [
-    ['Scout artifacts', model.metrics.endpoints],
-    ['Deal receipts', model.metrics.receipts],
-    ['Source mix', model.metrics.dealerSources],
-    ['Best source', model.metrics.bestDealerSource],
+    ['Slickdeals deals', model.metrics.slickdealsDeals],
+    ['Alert rules', model.metrics.slickdealsAlerts],
+    ['Queued alerts', model.metrics.slickdealsNotifications],
+    ['Hot deals', model.metrics.slickdealsHotDeals],
   ];
 
   return `<!doctype html>
@@ -201,18 +208,18 @@ export function renderDashboardHtml(model = buildDashboardModel()) {
       <span class="wordmark">${escapeHtml(model.brand.name)}</span>
     </a>
     <div class="nav">
-      <a class="pill" href="/v1/scout/capabilities">Capability Card</a>
-      <a class="pill" href="/v1/scout/report?query=Dyson%20Airwrap">Scout Report</a>
-      <a class="pill accent" href="/v1/agent-card">Agent Card</a>
+      <a class="pill" href="/v1/deals">Deals API</a>
+      <a class="pill" href="/v1/alerts">Alert Rules</a>
+      <a class="pill accent" href="/v1/slickdeals/summary">Slickdeals Summary</a>
     </div>
   </nav>
   <section class="hero">
     <div class="panel hero-main">
       <div>
-        <div class="eyebrow">Remote MCP commerce pattern · source-locked deal intelligence for agents</div>
+        <div class="eyebrow">Slickdeals website → filter deal ngon → database → Telegram alert/API/dashboard</div>
         <h1>${escapeHtml(model.brand.name)}</h1>
-        <p class="tagline">Precision deal scouting for agents: tickets, reports, vouchers, trust scores, receipts.</p>
-        <p class="muted">API base: <code>${escapeHtml(model.brand.apiBaseUrl)}</code> · MCP-style stateless HTTP endpoints</p>
+        <p class="tagline">${escapeHtml(model.brand.tagline)}</p>
+        <p class="muted">API base: <code>${escapeHtml(model.brand.apiBaseUrl)}</code> · Sale alerts before the crowd</p>
       </div>
       <div>
         <span class="pill">● ${escapeHtml(model.payment.currency)}</span><span class="pill">${escapeHtml(model.payment.protocol)}</span><span class="pill accent">Scout Report Ready</span>
@@ -238,7 +245,43 @@ export function renderDashboardHtml(model = buildDashboardModel()) {
 
   <section class="sections">
     <div class="panel">
-      <h2>Paid Endpoints</h2>
+      <h2>Slickdeals Alert Pipeline</h2>
+      <div class="flow">${model.slickdeals.pipeline.map((step) => `<div>${escapeHtml(step)}</div>`).join('')}</div>
+    </div>
+    <div class="panel">
+      <h2>Hot Slickdeals Now</h2>
+      <div class="deal">
+      ${model.slickdeals.deals.slice(0, 5).map((d) => `<div class="deal-card"><strong>${escapeHtml(d.title)}</strong> · <span class="score">+${escapeHtml(d.thumb_score)}</span><br><span class="muted">${escapeHtml(d.merchant)} · ${escapeHtml(d.price === null ? 'n/a' : `$${d.price}`)} · <a href="${escapeHtml(d.url)}">open deal</a></span></div>`).join('')}
+      </div>
+    </div>
+  </section>
+
+  <section class="sections">
+    <div class="panel">
+      <h2>Alert Rules</h2>
+      <table><thead><tr><th>Name</th><th>Keywords</th><th>Min score</th><th>Max price</th></tr></thead><tbody>
+      ${model.slickdeals.alerts.map((a) => `<tr><td>${escapeHtml(a.name)}</td><td>${escapeHtml(a.includeKeywords.join(', '))}<br><span class="muted">Exclude: ${escapeHtml(a.excludeKeywords.join(', ') || 'none')}</span></td><td>${escapeHtml(a.minThumbScore)}</td><td>${escapeHtml(a.maxPrice || 'none')}</td></tr>`).join('')}
+      </tbody></table>
+    </div>
+    <div class="panel">
+      <h2>Telegram Alert Queue</h2>
+      <p class="muted">Use <code>POST /v1/slickdeals/poll</code> to collect + dedupe + queue matching Telegram messages.</p>
+      <pre style="white-space:pre-wrap;background:#0b1220;border:1px solid var(--line);border-radius:16px;padding:14px;color:#d1fae5">${escapeHtml(model.slickdeals.notifications[0]?.message || 'No queued notification yet. Run poll to evaluate alert rules.')}</pre>
+    </div>
+  </section>
+
+  <section class="sections">
+    <div class="panel">
+      <h2>Core API Endpoints</h2>
+      <table><thead><tr><th>Method</th><th>Path</th><th>Purpose</th></tr></thead><tbody>
+        <tr><td>GET</td><td><code>/v1/deals</code></td><td>List stored Slickdeals deals</td></tr>
+        <tr><td>GET</td><td><code>/v1/deals/:id</code></td><td>Deal detail by external ID</td></tr>
+        <tr><td>GET/POST/PATCH/DELETE</td><td><code>/v1/alerts</code></td><td>Manage alert rules</td></tr>
+        <tr><td>GET</td><td><code>/v1/notifications</code></td><td>Queued Telegram alerts</td></tr>
+      </tbody></table>
+    </div>
+    <div class="panel">
+      <h2>Legacy Paid Endpoints</h2>
       <table><thead><tr><th>Method</th><th>Path</th><th>Price</th><th>Product</th></tr></thead><tbody>
       ${model.endpoints.map((e) => `<tr><td>${escapeHtml(e.method)}</td><td><code>${escapeHtml(e.path)}</code></td><td>${escapeHtml(e.price)}</td><td>${escapeHtml(e.product)}</td></tr>`).join('')}
       </tbody></table>
