@@ -73,12 +73,12 @@ export function buildTelegramWebhookSetup({ baseUrl = 'https://prodeal-api.verce
     botTokenConfigured,
     secretTokenConfigured,
     supportedMessages: [
-      'săn deal Dyson Airwrap dưới 350$',
-      'check giá iPhone 15 Pro Max',
-      'tìm voucher WHOOP hôm nay',
-      '/scout Dior Sauvage',
-      '/ticket Dyson Airwrap',
+      'check sale iphone 17 hôm nay',
+      'canh sale macbook dưới 800',
+      'list alert',
+      'săn deal steam deck dưới 350',
     ],
+    primaryFlow: 'Slickdeals RSS/search → filter rules → dedupe database → Telegram alert',
     network: { name: 'Arc Testnet', caip2: 'eip155:5042002' },
   };
 }
