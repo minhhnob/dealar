@@ -9,7 +9,7 @@ test('answerTelegramDealRequest returns help for start messages', () => {
   assert.equal(answer.ok, true);
   assert.equal(answer.intent, 'help');
   assert.match(answer.message, /Dealar Agent/);
-  assert.match(answer.message, /săn deal Dyson Airwrap/);
+  assert.match(answer.message, /canh sale macbook dưới 800/);
 });
 
 test('answerTelegramDealRequest handles natural-language deal hunting', () => {
@@ -31,6 +31,21 @@ test('answerTelegramDealRequest does not return Amazon iPhone 15 data for iPhone
   assert.match(answer.message, /Dealar Slickdeals check/i);
   assert.doesNotMatch(answer.message, /iPhone 15 Pro Max/i);
   assert.doesNotMatch(answer.message, /Amazon — \$849\.99/i);
+});
+
+test('answerTelegramDealRequest creates and lists natural-language Slickdeals alerts', () => {
+  const created = answerTelegramDealRequest({ text: 'canh sale macbook dưới 800', baseUrl: 'https://dealar.example' });
+
+  assert.equal(created.ok, true);
+  assert.equal(created.intent, 'alert_create');
+  assert.match(created.message, /Đã tạo alert rule/i);
+  assert.match(created.message, /macbook/i);
+  assert.match(created.message, /\$800/i);
+
+  const listed = answerTelegramDealRequest({ text: 'list alert' });
+  assert.equal(listed.intent, 'alert_list');
+  assert.match(listed.message, /Alert rules đang bật/i);
+  assert.match(listed.message, /macbook/i);
 });
 
 test('answerTelegramDealRequest handles voucher, quote, scout, and ticket intents', () => {

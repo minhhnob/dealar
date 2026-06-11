@@ -34,7 +34,7 @@ test('Slickdeals alert engine dedupes deals and queues Telegram-ready notificati
 
   const matches = evaluateAlerts({ deals: upsert.inserted });
   assert.equal(matches.length, 1);
-  assert.match(matches[0].notification.message, /Deal mới từ Slickdeals/);
+  assert.match(matches[0].notification.message, /Deal mới trên Slickdeals/);
   assert.match(matches[0].notification.message, /iPhone 16/);
 
   const second = evaluateAlerts({ deals: upsert.inserted });

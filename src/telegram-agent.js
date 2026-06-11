@@ -1,6 +1,6 @@
 import { DEFAULT_DEALER_SOURCES, searchDealerCoupons, searchDealerDeals, quoteProduct } from './dealer-scout.js';
 import { buildScoutReport, createDealRequestTicket } from './dealer-native-product.js';
-import { listDeals } from './slickdeals-alerts.js';
+import { createAlertRule, listAlerts, listDeals, parseNaturalAlertCommand } from './slickdeals-alerts.js';
 
 const DEFAULT_SOURCES = DEFAULT_DEALER_SOURCES;
 
@@ -23,6 +23,8 @@ function detectIntent(text) {
   if (!lower || lower === '/start' || lower === 'start') return 'help';
   if (lower.startsWith('/help') || lower.includes('hướng dẫn') || lower.includes('huong dan')) return 'help';
   if (lower.startsWith('/ticket') || lower.includes('tạo ticket') || lower.includes('tao ticket')) return 'ticket';
+  if (lower === 'list alert' || lower === 'list alerts' || lower === '/alerts' || lower === 'danh sách alert' || lower === 'danh sach alert') return 'alert_list';
+  if (parseNaturalAlertCommand(text)) return 'alert_create';
   if (lower.startsWith('/coupon') || lower.startsWith('/voucher') || lower.includes('voucher') || lower.includes('coupon') || lower.includes('mã giảm') || lower.includes('ma giam')) return 'coupon';
   if (lower.startsWith('/quote') || lower.includes('báo giá') || lower.includes('bao gia') || lower.includes('check giá') || lower.includes('check gia') || lower.includes('giá bao nhiêu') || lower.includes('gia bao nhieu')) return 'quote';
   if (lower.startsWith('/scout') || lower.includes('report') || lower.includes('so sánh') || lower.includes('so sanh')) return 'report';
@@ -34,10 +36,10 @@ function helpMessage(baseUrl) {
     '🛒 Dealar Agent đã sẵn sàng săn deal.',
     '',
     'Sếp/user có thể hỏi tự nhiên, ví dụ:',
-    '• săn deal Dyson Airwrap dưới 350$',
-    '• check giá iPhone 15 Pro Max',
-    '• tìm voucher WHOOP hôm nay',
-    '• so sánh WHOOP Amazon eBay Slickdeals',
+    '• check sale iphone 17 hôm nay',
+    '• canh sale macbook dưới 800',
+    '• list alert',
+    '• săn deal steam deck dưới 350',
     '',
     'Lệnh nhanh:',
     '/deal <sản phẩm>',
@@ -75,6 +77,36 @@ function formatSlickdealsCheck(query, deals, baseUrl) {
     '',
     `API: ${baseUrl}/v1/deals?query=${encodeURIComponent(query)}`,
   ].join('\n');
+}
+
+function formatCreatedAlert(alert, baseUrl) {
+  return [
+    '✅ Đã tạo alert rule',
+    '',
+    `Rule: ${alert.name}`,
+    `Keyword: ${alert.includeKeywords.join(', ') || 'any'}`,
+    `Max price: ${alert.maxPrice ? `$${alert.maxPrice}` : 'any'}`,
+    `Min score: +${alert.minThumbScore}`,
+    `Exclude: ${alert.excludeKeywords.join(', ') || 'none'}`,
+    'Channel: Telegram',
+    '',
+    `Dashboard: ${baseUrl}/dashboard`,
+    'Khi có deal khớp trên Slickdeals, em sẽ báo sếp.',
+  ].join('\n');
+}
+
+function formatAlertList(alerts) {
+  if (!alerts.length) return '📌 Chưa có alert rule. Sếp nhắn: canh sale macbook dưới 800';
+  return [
+    '📌 Alert rules đang bật',
+    '',
+    ...alerts.map((alert, index) => [
+      `${index + 1}. ${alert.name}`,
+      `- keyword: ${alert.includeKeywords.join(', ') || 'any'}`,
+      `- max price: ${alert.maxPrice ? `$${alert.maxPrice}` : 'any'}`,
+      `- min score: +${alert.minThumbScore}`,
+    ].join('\n')),
+  ].join('\n\n');
 }
 
 function formatQuote(query, quote) {
@@ -125,6 +157,17 @@ export function answerTelegramDealRequest({ text = '', baseUrl = 'https://prodea
 
   if (intent === 'help') {
     return { ok: true, intent, query: null, message: helpMessage(baseUrl), artifacts: [] };
+  }
+
+  if (intent === 'alert_list') {
+    const alerts = listAlerts().filter((alert) => alert.enabled);
+    return { ok: true, intent, query: null, message: formatAlertList(alerts), artifacts: [{ type: 'Alert Rules', data: alerts }] };
+  }
+
+  if (intent === 'alert_create') {
+    const parsed = parseNaturalAlertCommand(text);
+    const alert = createAlertRule(parsed);
+    return { ok: true, intent, query: alert.includeKeywords.join(' '), message: formatCreatedAlert(alert, baseUrl), artifacts: [{ type: 'Alert Rule', data: alert }], userId };
   }
 
   if (intent === 'coupon') {

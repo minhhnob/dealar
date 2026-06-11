@@ -1,17 +1,4 @@
 import { buildSlickdealsDashboardModel } from './slickdeals-alerts.js';
-import { listRetailers, searchDeals } from './deal-intelligence.js';
-import { createAgentWalletPolicy, formatUsdcAmount } from './agent-wallet-policy.js';
-import { buildGatewayTraceModel } from './gateway-trace.js';
-import { buildAgentStackQuickstartModel } from './agent-stack-quickstart.js';
-import { createDemoReceiptLedger, summarizePaymentLedger } from './payment-ledger.js';
-import { listMarketplaceServices, summarizeMarketplaceServices } from './service-catalog.js';
-import { buildTelegramDealSummary, listDealerSources, quoteProduct, searchDealerDeals } from './dealer-scout.js';
-import { buildConduitReferenceModel, buildDealerConduitIntegrationPlan } from './conduit-reference.js';
-import { buildDealerMarketplaceListing, buildPaymentProducts, createDealerPaymentLink } from './dealer-payment-products.js';
-import { buildDealerCapabilityCard, buildScoutReport, createDealRequestTicket } from './dealer-native-product.js';
-import { buildDealarBrandSystem } from './dealar-brand.js';
-import { buildDealarSkillManifest } from './dealar-skill-system.js';
-import { buildDealarMcpReadiness } from './mcp-integration-catalog.js';
 
 const escapeHtml = (value) => String(value ?? '')
   .replaceAll('&', '&amp;')
@@ -20,137 +7,46 @@ const escapeHtml = (value) => String(value ?? '')
   .replaceAll('"', '&quot;')
   .replaceAll("'", '&#39;');
 
-export function buildDashboardModel({
-  paymentMode = process.env.DEALAR_PAYMENT_MODE || 'demo',
-  apiBaseUrl = process.env.DEALAR_API_BASE_URL || 'http://127.0.0.1:8787',
-} = {}) {
-  const brandSystem = buildDealarBrandSystem();
+export function buildDashboardModel({ apiBaseUrl = process.env.DEALAR_API_BASE_URL || 'http://127.0.0.1:8787' } = {}) {
   const slickdeals = buildSlickdealsDashboardModel();
-  const skillManifest = buildDealarSkillManifest({ baseUrl: apiBaseUrl });
-  const mcpReadiness = buildDealarMcpReadiness({ baseUrl: apiBaseUrl });
-  const whoop = searchDeals({ query: 'whoop', regions: ['us', 'eu'] });
-  const retailers = listRetailers({ category: 'beauty', markets: ['us', 'eu'] });
-  const gatewayTrace = buildGatewayTraceModel({
-    settlementId: 'c9933054-6b34-44bb-8c04-e7e9e1b8352c',
-    status: 'completed',
-    batchTx: '0xfbad1baae7fd9b88f4e1b034a4236da02012870acbd6ae83b583e85528be396e',
-    explorerUrl: 'https://testnet.arcscan.app/tx/0xfbad1baae7fd9b88f4e1b034a4236da02012870acbd6ae83b583e85528be396e',
-  });
-  const agentStack = buildAgentStackQuickstartModel();
-  const services = listMarketplaceServices();
-  const serviceSummary = summarizeMarketplaceServices(services);
-  const receiptLedger = createDemoReceiptLedger();
-  const ledgerSummary = summarizePaymentLedger(receiptLedger);
-  const dealerSearch = searchDealerDeals({ query: 'WHOOP 5.0', sources: ['amazon', 'ebay', 'slickdeals'] });
-  const dealerQuote = quoteProduct({ query: 'Dyson Airwrap' });
-  const dealerSources = listDealerSources();
-  const dealerTelegramSummary = buildTelegramDealSummary(dealerSearch);
-  const conduit = buildConduitReferenceModel();
-  const conduitPlan = buildDealerConduitIntegrationPlan();
-  const dealerPaymentProducts = buildPaymentProducts({ apiBaseUrl });
-  const dealerPaymentLink = createDealerPaymentLink({ query: 'Dyson Airwrap', baseUrl: apiBaseUrl });
-  const dealerMarketplaceListing = buildDealerMarketplaceListing({ baseUrl: apiBaseUrl });
-  const scoutReport = buildScoutReport({ query: 'Dyson Airwrap', baseUrl: apiBaseUrl });
-  const dealRequestTicket = createDealRequestTicket({ query: 'Dyson Airwrap', baseUrl: apiBaseUrl });
-  const dealerCapabilityCard = buildDealerCapabilityCard({ baseUrl: apiBaseUrl });
-  const walletPolicy = createAgentWalletPolicy({
-    dailyLimitUsdc: process.env.DEALAR_AGENT_DAILY_LIMIT_USDC || '1.00',
-    perRequestLimitUsdc: process.env.DEALAR_AGENT_PER_REQUEST_LIMIT_USDC || '0.25',
-    allowlistedBaseUrls: [apiBaseUrl],
-    mode: paymentMode,
-  });
-
-  const endpoints = [
-    { method: 'GET', path: '/v1/deals/search', price: '0.25 USDC', product: 'WHOOP + retail deal intelligence', status: 'live' },
-    { method: 'GET', path: '/v1/retailers', price: '0.05 USDC', product: 'US/EU beauty retailer database', status: 'live' },
-    { method: 'POST', path: '/v1/coupons/verify', price: '0.01 USDC', product: 'Coupon verification', status: 'live' },
-  ];
-
-  const requestLogs = [
-    { agent: 'dealar-agent', endpoint: '/v1/deals/search', amount: '0.25', status: 'paid', result: 'WHOOP report unlocked' },
-    { agent: 'coupon-bot', endpoint: '/v1/coupons/verify', amount: '0.01', status: 'paid', result: 'WELCOME20 valid' },
-    { agent: 'retail-scout', endpoint: '/v1/retailers', amount: '0.05', status: 'paid', result: '11 retailers returned' },
-  ];
-  const revenueMicroUsdc = requestLogs.reduce((sum, log) => {
-    const [whole, fraction = ''] = log.amount.split('.');
-    return sum + BigInt(whole) * 1000000n + BigInt(fraction.padEnd(6, '0'));
-  }, 0n);
-
   return {
     brand: {
-      ...brandSystem,
       name: 'Dealar',
-      tagline: 'Bot canh sale Slickdeals: lọc deal ngon, lưu database, gửi alert/API/dashboard',
+      tagline: 'Bot canh sale Slickdeals cho sếp.',
+      subheadline: 'Theo dõi deal mới, lọc deal ngon, chống trùng và gửi Telegram alert khi có sale đáng mua.',
       apiBaseUrl,
     },
-    payment: {
-      mode: paymentMode,
-      protocol: 'x402 / Circle Gateway batching',
-      network: 'Arc Testnet',
-      currency: 'USDC',
-    },
-    wallet: {
-      label: walletPolicy.walletLabel,
-      dailyLimitUsdc: walletPolicy.dailyLimitUsdc,
-      perRequestLimitUsdc: walletPolicy.perRequestLimitUsdc,
-      allowlistedBaseUrls: walletPolicy.allowlistedBaseUrls,
-      controls: walletPolicy.controls,
-    },
     metrics: {
-      endpoints: endpoints.length,
-      demoRevenueUsdc: ledgerSummary.totalRevenueUsdc || formatUsdcAmount(revenueMicroUsdc),
-      dealSources: whoop.best_deals.length,
-      retailerCount: retailers.retailers.length,
-      marketplaceServices: serviceSummary.totalServices,
-      receipts: ledgerSummary.totalReceipts,
-      dealerSources: dealerSources.length,
-      bestDealerSource: dealerSearch.bestDeal?.retailer || 'n/a',
-      slickdealsDeals: slickdeals.metrics.deals,
-      slickdealsAlerts: slickdeals.metrics.alerts,
-      slickdealsNotifications: slickdeals.metrics.notifications,
-      slickdealsHotDeals: slickdeals.metrics.hotDeals,
+      dealsTracked: slickdeals.metrics.deals,
+      activeAlerts: slickdeals.alerts.filter((alert) => alert.enabled).length,
+      notificationsQueued: slickdeals.metrics.queued,
+      hotDeals: slickdeals.metrics.hotDeals,
+      endpoints: 5,
     },
     slickdeals,
-    endpoints,
-    requestLogs,
-    dealReport: whoop,
-    retailers: retailers.retailers.slice(0, 6),
-    paymentFlow: ['Request paid endpoint', 'Receive 402 Payment Required', 'Agent policy check', 'USDC payment via x402', 'Retry with payment proof', 'Unlock intelligence'],
-    gatewayTrace,
-    agentStack,
-    services,
-    serviceSummary,
-    receiptLedger,
-    ledgerSummary,
-    dealerSearch,
-    dealerQuote,
-    dealerSources,
-    dealerTelegramSummary,
-    conduit,
-    conduitPlan,
-    dealerPaymentProducts,
-    dealerPaymentLink,
-    dealerMarketplaceListing,
-    scoutReport,
-    dealRequestTicket,
-    dealerCapabilityCard,
-    skillManifest,
-    mcpReadiness,
-    runtimeIntegrations: [
-      { name: 'JSON CLI Bridge', command: 'npm run cli -- {"action":"deal.search","params":{"query":"whoop"}}', status: 'live' },
-      { name: 'Hermes Plugin', command: 'dealar_search_deals(query="whoop", regions="us,eu")', status: 'scaffolded' },
-      { name: 'x402 Buyer Client', command: 'npm run buyer:deal-search -- --mode x402', status: 'live' },
-      { name: 'Agent Wallet Policy', command: 'npm run agent:deal-search -- --daily-limit 1.00', status: 'live' },
+    commands: [
+      { input: 'check sale iphone 17 hôm nay', output: 'Kiểm tra watchlist hiện tại và trả deal Slickdeals khớp nếu có.' },
+      { input: 'canh sale macbook dưới 800', output: 'Tạo alert rule Telegram cho MacBook, max price $800.' },
+      { input: 'list alert', output: 'Liệt kê rule đang bật, keyword, giá tối đa và min score.' },
+    ],
+    endpoints: [
+      { method: 'GET', path: '/v1/deals', description: 'Lấy danh sách deal đã lưu' },
+      { method: 'GET', path: '/v1/alerts', description: 'Lấy alert rules' },
+      { method: 'POST', path: '/v1/alerts', description: 'Tạo rule canh sale mới' },
+      { method: 'POST', path: '/v1/slickdeals/poll', description: 'Chạy poll Slickdeals thủ công' },
+      { method: 'GET', path: '/v1/notifications', description: 'Xem Telegram alert queue' },
     ],
   };
 }
 
+const metricCard = ([label, value]) => `<div class="metric"><span>${escapeHtml(label)}</span><b>${escapeHtml(value)}</b></div>`;
+
 export function renderDashboardHtml(model = buildDashboardModel()) {
   const cards = [
-    ['Slickdeals deals', model.metrics.slickdealsDeals],
-    ['Alert rules', model.metrics.slickdealsAlerts],
-    ['Queued alerts', model.metrics.slickdealsNotifications],
-    ['Hot deals', model.metrics.slickdealsHotDeals],
+    ['Deals tracked', model.metrics.dealsTracked],
+    ['Active alerts', model.metrics.activeAlerts],
+    ['Notifications queued', model.metrics.notificationsQueued],
+    ['Hot deals', model.metrics.hotDeals],
   ];
 
   return `<!doctype html>
@@ -158,88 +54,39 @@ export function renderDashboardHtml(model = buildDashboardModel()) {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${escapeHtml(model.brand.name)} Dashboard</title>
+  <title>Dealar — Slickdeals Alert Dashboard</title>
   <style>
-    :root { color-scheme: dark; --black:#000000; --charcoal:#0B0B0B; --graphite:#272A2A; --white:#FFFFFF; --ash:#CECECE; --steel:#858585; --orange:#CC6437; --line:rgba(255,255,255,.16); }
-    * { box-sizing: border-box; }
-    body { margin:0; font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace; background:#000; color:var(--white); }
-    body:before { content:""; position:fixed; inset:-20%; pointer-events:none; background:radial-gradient(circle at 78% 12%, rgba(204,100,55,.22), transparent 22%), radial-gradient(circle at 10% 4%, rgba(255,255,255,.12), transparent 16%), linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size:auto, auto, 64px 64px, 64px 64px; opacity:.8; }
-    main { position:relative; max-width:1240px; margin:0 auto; padding:34px 20px 80px; }
-    .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:34px; }
-    .brand-lockup { display:flex; align-items:center; gap:13px; color:var(--white); text-decoration:none; }
-    .logo { width:48px; height:48px; display:grid; place-items:center; }
-    .wordmark { font-family:'Open Sans Condensed','Arial Narrow',Inter,sans-serif; font-size:20px; letter-spacing:-.02em; text-transform:uppercase; }
-    .nav { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; }
-    .hero { display:grid; gap:18px; grid-template-columns:1.35fr .9fr; align-items:stretch; }
-    .panel { background:rgba(11,11,11,.82); border:1px solid var(--line); border-radius:10px; padding:24px; box-shadow:0 34px 90px rgba(0,0,0,.48); backdrop-filter:blur(18px); }
-    .hero-main { min-height:430px; display:flex; flex-direction:column; justify-content:space-between; }
-    h1 { font-family:'Open Sans Condensed','Arial Narrow',Inter,sans-serif; font-size:clamp(62px, 12vw, 148px); text-transform:uppercase; line-height:.9; margin:18px 0 8px; letter-spacing:-.06em; }
-    h2 { font-family:'Open Sans Condensed','Arial Narrow',Inter,sans-serif; text-transform:uppercase; letter-spacing:-.02em; margin:0 0 16px; font-size:20px; }
-    .eyebrow { color:var(--ash); font-size:11px; text-transform:uppercase; letter-spacing:.08em; }
-    .tagline { max-width:760px; font-family:'Open Sans Condensed','Arial Narrow',Inter,sans-serif; font-size:clamp(24px, 4vw, 48px); line-height:1; letter-spacing:-.04em; color:#fff; margin:0 0 22px; }
-    .muted { color:var(--steel); font-size:12px; line-height:1.45; }
-    .pill { display:inline-flex; gap:8px; align-items:center; border:1px solid var(--white); background:transparent; color:var(--white); padding:9px 15px; border-radius:1440px; font-size:12px; margin:0 6px 8px 0; text-decoration:none; }
-    .pill.accent { border-color:var(--orange); color:#fff; box-shadow:0 0 40px rgba(204,100,55,.22) inset; }
-    .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:18px 0 0; }
-    .metric { background:#0B0B0B; border:1px solid var(--line); border-radius:10px; padding:16px; min-height:104px; }
-    .metric b { display:block; font-family:'Open Sans Condensed','Arial Narrow',Inter,sans-serif; font-size:32px; line-height:1; margin-top:20px; letter-spacing:-.04em; }
-    .metric span { color:var(--steel); font-size:11px; text-transform:uppercase; }
-    .sections { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:18px; }
-    table { width:100%; border-collapse:collapse; font-size:12px; }
-    th, td { text-align:left; padding:13px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
-    th { color:var(--ash); font-size:10px; text-transform:uppercase; letter-spacing:.08em; }
-    code { color:var(--white); background:#000; border:1px solid var(--line); padding:2px 6px; border-radius:4px; }
-    .flow { display:grid; gap:8px; counter-reset: step; }
-    .flow div { background:#000; border:1px solid var(--line); border-radius:10px; padding:12px; }
-    .flow div:before { counter-increment:step; content:counter(step); display:inline-grid; place-items:center; width:22px; height:22px; margin-right:8px; border-radius:1440px; border:1px solid var(--orange); color:var(--orange); font-size:11px; }
-    .deal { display:grid; gap:8px; }
-    .deal-card { background:#000; border:1px solid var(--line); border-radius:10px; padding:14px; }
-    .deal-card strong { color:#fff; text-transform:uppercase; font-family:'Open Sans Condensed','Arial Narrow',Inter,sans-serif; }
-    .score { color:var(--orange); }
-    .brand-note { display:grid; gap:10px; margin-top:16px; }
-    @media (max-width: 850px) { .hero,.sections,.grid { grid-template-columns:1fr; } .topbar{align-items:flex-start; flex-direction:column;} }
+    :root { color-scheme: dark; --bg:#070707; --panel:#101010; --ink:#fff; --muted:#a7a7a7; --line:rgba(255,255,255,.14); --orange:#CC6437; --green:#79D37C; }
+    *{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at 82% 8%,rgba(204,100,55,.22),transparent 28%),var(--bg);color:var(--ink);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,monospace} a{color:inherit} main{max-width:1180px;margin:auto;padding:28px 18px 72px}.topbar{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:24px}.brand{font-size:22px;font-weight:800;letter-spacing:-.06em;text-transform:uppercase}.nav{display:flex;gap:8px;flex-wrap:wrap}.pill{border:1px solid var(--line);border-radius:999px;padding:9px 13px;text-decoration:none;font-size:12px}.pill.accent{border-color:var(--orange);box-shadow:0 0 34px rgba(204,100,55,.18) inset}.hero{display:grid;grid-template-columns:1.3fr .7fr;gap:16px}.panel{background:rgba(16,16,16,.84);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 30px 90px rgba(0,0,0,.35)}.eyebrow{color:var(--orange);text-transform:uppercase;font-size:11px;letter-spacing:.08em}h1{font-size:clamp(54px,11vw,128px);line-height:.86;margin:16px 0 10px;letter-spacing:-.08em;text-transform:uppercase}h2{font-size:18px;text-transform:uppercase;letter-spacing:-.03em;margin:0 0 14px}.lead{font-size:clamp(21px,3vw,38px);line-height:1.04;letter-spacing:-.04em;margin:0 0 16px}.muted{color:var(--muted);font-size:13px;line-height:1.55}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}.metric{background:#050505;border:1px solid var(--line);border-radius:14px;padding:15px;min-height:102px}.metric span{color:var(--muted);font-size:11px;text-transform:uppercase}.metric b{display:block;font-size:34px;margin-top:20px}.sections{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}.flow{display:grid;gap:8px}.flow div,.deal-card,.rule,.queue,.command,.endpoint{background:#050505;border:1px solid var(--line);border-radius:13px;padding:13px}.deal-list,.rule-list,.queue-list,.command-list,.endpoint-list{display:grid;gap:10px}.score{color:var(--orange)}.status{color:var(--green)}code{background:#000;border:1px solid var(--line);border-radius:7px;padding:2px 6px}@media(max-width:860px){.hero,.sections,.grid{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}}
   </style>
 </head>
 <body>
 <main>
   <nav class="topbar">
-    <a class="brand-lockup" href="/dashboard" aria-label="Dealar home">
-      <span class="logo">${model.brand.logo.svg}</span>
-      <span class="wordmark">${escapeHtml(model.brand.name)}</span>
-    </a>
+    <div class="brand">DEALAR</div>
     <div class="nav">
       <a class="pill" href="/v1/deals">Deals API</a>
       <a class="pill" href="/v1/alerts">Alert Rules</a>
-      <a class="pill accent" href="/v1/slickdeals/summary">Slickdeals Summary</a>
+      <a class="pill accent" href="/v1/telegram/webhook/setup">Telegram Setup</a>
     </div>
   </nav>
+
   <section class="hero">
-    <div class="panel hero-main">
-      <div>
-        <div class="eyebrow">Slickdeals website → filter deal ngon → database → Telegram alert/API/dashboard</div>
-        <h1>${escapeHtml(model.brand.name)}</h1>
-        <p class="tagline">${escapeHtml(model.brand.tagline)}</p>
-        <p class="muted">API base: <code>${escapeHtml(model.brand.apiBaseUrl)}</code> · Sale alerts before the crowd</p>
-      </div>
-      <div>
-        <span class="pill">● ${escapeHtml(model.payment.currency)}</span><span class="pill">${escapeHtml(model.payment.protocol)}</span><span class="pill accent">Scout Report Ready</span>
-        <div class="grid">
-          ${cards.map(([label, value]) => `<div class="metric"><span>${escapeHtml(label)}</span><b>${escapeHtml(value)}</b></div>`).join('')}
-        </div>
-      </div>
+    <div class="panel">
+      <div class="eyebrow">Slickdeals → Collector → Filter → Database → Telegram Alert</div>
+      <h1>Dealar</h1>
+      <p class="lead">${escapeHtml(model.brand.tagline)}</p>
+      <p class="muted">${escapeHtml(model.brand.subheadline)}</p>
+      <p><a class="pill accent" href="/v1/deals">Xem deal mới</a><a class="pill" href="/v1/alerts">Tạo alert rule</a><a class="pill" href="/v1/slickdeals/poll">Run poll now</a></p>
+      <div class="grid">${cards.map(metricCard).join('')}</div>
     </div>
     <div class="panel">
-      <h2>Brand System</h2>
-      <p class="muted">${escapeHtml(model.brand.thesis)}</p>
-      <div class="brand-note">
-        ${model.brand.productLanguage.slice(0, 5).map((item) => `<span class="pill">${escapeHtml(item)}</span>`).join('')}
-      </div>
-      <h2 style="margin-top:24px">Wallet Policy</h2>
-      <p><span class="muted">Mode:</span> <code>${escapeHtml(model.payment.mode)}</code></p>
-      <p><span class="muted">Network:</span> ${escapeHtml(model.payment.network)}</p>
-      <p><span class="muted">Daily limit:</span> ${escapeHtml(model.wallet.dailyLimitUsdc)} USDC</p>
-      <p><span class="muted">Per request:</span> ${escapeHtml(model.wallet.perRequestLimitUsdc)} USDC</p>
-      <p><span class="muted">Controls:</span><br>${model.wallet.controls.map((c) => `<code>${escapeHtml(c)}</code>`).join(' ')}</p>
+      <h2>Poll Status</h2>
+      <p class="muted">Source: <code>Slickdeals RSS/search</code></p>
+      <p class="muted">Last poll: <code>${escapeHtml(model.slickdeals.lastPoll?.checked_at || 'not run yet')}</code></p>
+      <p class="muted">Status: <span class="status">Monitoring</span></p>
+      <h2 style="margin-top:24px">Modules</h2>
+      <div class="flow">${model.slickdeals.modules.map((m) => `<div><b>${escapeHtml(m.name)}</b><br><span class="muted">${escapeHtml(m.file)} — ${escapeHtml(m.role)}</span></div>`).join('')}</div>
     </div>
   </section>
 
@@ -249,179 +96,30 @@ export function renderDashboardHtml(model = buildDashboardModel()) {
       <div class="flow">${model.slickdeals.pipeline.map((step) => `<div>${escapeHtml(step)}</div>`).join('')}</div>
     </div>
     <div class="panel">
-      <h2>Hot Slickdeals Now</h2>
-      <div class="deal">
-      ${model.slickdeals.deals.slice(0, 5).map((d) => `<div class="deal-card"><strong>${escapeHtml(d.title)}</strong> · <span class="score">+${escapeHtml(d.thumb_score)}</span><br><span class="muted">${escapeHtml(d.merchant)} · ${escapeHtml(d.price === null ? 'n/a' : `$${d.price}`)} · <a href="${escapeHtml(d.url)}">open deal</a></span></div>`).join('')}
-      </div>
+      <h2>Bot commands</h2>
+      <div class="command-list">${model.commands.map((cmd) => `<div class="command"><code>${escapeHtml(cmd.input)}</code><br><span class="muted">${escapeHtml(cmd.output)}</span></div>`).join('')}</div>
     </div>
   </section>
 
   <section class="sections">
+    <div class="panel">
+      <h2>Hot Slickdeals Now</h2>
+      <div class="deal-list">${model.slickdeals.deals.slice(0, 6).map((d) => `<div class="deal-card"><b>${escapeHtml(d.title)}</b> <span class="score">+${escapeHtml(d.thumb_score)}</span><br><span class="muted">${escapeHtml(d.merchant)} · ${escapeHtml(d.price === null ? 'n/a' : `$${d.price}`)} · <a href="${escapeHtml(d.url)}">open deal</a></span></div>`).join('') || '<p class="muted">Chưa có deal khớp. Dealar vẫn đang theo dõi Slickdeals.</p>'}</div>
+    </div>
     <div class="panel">
       <h2>Alert Rules</h2>
-      <table><thead><tr><th>Name</th><th>Keywords</th><th>Min score</th><th>Max price</th></tr></thead><tbody>
-      ${model.slickdeals.alerts.map((a) => `<tr><td>${escapeHtml(a.name)}</td><td>${escapeHtml(a.includeKeywords.join(', '))}<br><span class="muted">Exclude: ${escapeHtml(a.excludeKeywords.join(', ') || 'none')}</span></td><td>${escapeHtml(a.minThumbScore)}</td><td>${escapeHtml(a.maxPrice || 'none')}</td></tr>`).join('')}
-      </tbody></table>
+      <div class="rule-list">${model.slickdeals.alerts.map((a) => `<div class="rule"><b>${escapeHtml(a.name)}</b> · <span class="status">${a.enabled ? 'Monitoring' : 'Paused'}</span><br><span class="muted">include: ${escapeHtml(a.includeKeywords.join(', ') || 'any')} · exclude: ${escapeHtml(a.excludeKeywords.join(', ') || 'none')} · max: ${escapeHtml(a.maxPrice ? `$${a.maxPrice}` : 'any')} · min score: +${escapeHtml(a.minThumbScore)}</span></div>`).join('')}</div>
     </div>
+  </section>
+
+  <section class="sections">
     <div class="panel">
       <h2>Telegram Alert Queue</h2>
-      <p class="muted">Use <code>POST /v1/slickdeals/poll</code> to collect + dedupe + queue matching Telegram messages.</p>
-      <pre style="white-space:pre-wrap;background:#0b1220;border:1px solid var(--line);border-radius:16px;padding:14px;color:#d1fae5">${escapeHtml(model.slickdeals.notifications[0]?.message || 'No queued notification yet. Run poll to evaluate alert rules.')}</pre>
-    </div>
-  </section>
-
-  <section class="sections">
-    <div class="panel">
-      <h2>Core API Endpoints</h2>
-      <table><thead><tr><th>Method</th><th>Path</th><th>Purpose</th></tr></thead><tbody>
-        <tr><td>GET</td><td><code>/v1/deals</code></td><td>List stored Slickdeals deals</td></tr>
-        <tr><td>GET</td><td><code>/v1/deals/:id</code></td><td>Deal detail by external ID</td></tr>
-        <tr><td>GET/POST/PATCH/DELETE</td><td><code>/v1/alerts</code></td><td>Manage alert rules</td></tr>
-        <tr><td>GET</td><td><code>/v1/notifications</code></td><td>Queued Telegram alerts</td></tr>
-      </tbody></table>
+      <div class="queue-list">${model.slickdeals.notifications.map((n) => `<div class="queue"><b>${escapeHtml(n.channel)}</b> · <span class="status">${escapeHtml(n.status)}</span><br><span class="muted">${escapeHtml(n.id)}</span></div>`).join('') || '<p class="muted">Chưa có alert queued. Khi deal khớp rule, Telegram queue sẽ hiện ở đây.</p>'}</div>
     </div>
     <div class="panel">
-      <h2>Legacy Paid Endpoints</h2>
-      <table><thead><tr><th>Method</th><th>Path</th><th>Price</th><th>Product</th></tr></thead><tbody>
-      ${model.endpoints.map((e) => `<tr><td>${escapeHtml(e.method)}</td><td><code>${escapeHtml(e.path)}</code></td><td>${escapeHtml(e.price)}</td><td>${escapeHtml(e.product)}</td></tr>`).join('')}
-      </tbody></table>
-    </div>
-    <div class="panel">
-      <h2>Payment Flow</h2>
-      <div class="flow">${model.paymentFlow.map((step) => `<div>${escapeHtml(step)}</div>`).join('')}</div>
-    </div>
-  </section>
-
-  <section class="sections">
-    <div class="panel">
-      <h2>Dealer Deal Scout</h2>
-      <p class="muted">Amazon + eBay + Slickdeals price, sale, voucher, and risk comparison.</p>
-      <div class="deal">
-      ${model.dealerSearch.results.map((d) => `<div class="deal-card"><strong>${escapeHtml(d.retailer)}</strong> · $${escapeHtml(d.effectivePrice)} · <span class="score">${escapeHtml(Math.round(d.confidence * 100))}%</span><br><span class="muted">${escapeHtml(d.title)} · Coupon: ${escapeHtml(d.couponCode || 'none')} · Risk: ${escapeHtml(d.risk)}</span></div>`).join('')}
-      </div>
-    </div>
-    <div class="panel">
-      <h2>Telegram Check Preview</h2>
-      <p class="muted">Command: <code>check deal WHOOP 5.0</code></p>
-      <pre style="white-space:pre-wrap;background:#0b1220;border:1px solid var(--line);border-radius:16px;padding:14px;color:#d1fae5">${escapeHtml(model.dealerTelegramSummary)}</pre>
-      <p class="muted">Quote sample: Dyson Airwrap best price <code>${escapeHtml(model.dealerQuote.bestPrice.retailer)} $${escapeHtml(model.dealerQuote.bestPrice.effectivePrice)}</code>; safer option <code>${escapeHtml(model.dealerQuote.safestDeal.retailer)} $${escapeHtml(model.dealerQuote.safestDeal.effectivePrice)}</code>.</p>
-    </div>
-  </section>
-
-  <section class="sections">
-    <div class="panel">
-      <h2>Dealer Capability Card</h2>
-      <p class="muted">Original Dealer discovery model: what the agent can scout, how much each Scout action costs, and where agents can call it.</p>
-      <table><thead><tr><th>Capability</th><th>Endpoint</th><th>USDC</th></tr></thead><tbody>
-      ${model.dealerCapabilityCard.capabilities.map((item) => `<tr><td>${escapeHtml(item.name)}<br><span class="muted">${escapeHtml(item.description)}</span></td><td><code>${escapeHtml(item.endpoint)}</code></td><td>${escapeHtml(item.price.usdc)}</td></tr>`).join('')}
-      </tbody></table>
-      <p class="muted">Deal Request Ticket: <code>${escapeHtml(model.dealRequestTicket.ticketUrl)}</code></p>
-    </div>
-    <div class="panel">
-      <h2>Scout Report</h2>
-      <p class="muted">Dealer-native output: Source Mix + Voucher Scan + Trust Score + Telegram-ready buy recommendation.</p>
-      <p><span class="muted">Best deal:</span> <code>${escapeHtml(model.scoutReport.bestDeal.retailer)} $${escapeHtml(model.scoutReport.bestDeal.effectivePrice)}</code></p>
-      <p><span class="muted">Trust score:</span> <code>${escapeHtml(model.scoutReport.trustScore.score)}/100 ${escapeHtml(model.scoutReport.trustScore.level)}</code></p>
-      <p><span class="muted">Scout endpoint:</span> <code>${escapeHtml(model.dealerCapabilityCard.links.scoutReport)}</code></p>
-      <p class="muted">x402/USDC remains protocol compatibility for paid unlocks; Dealer product language stays Deal Request Ticket → Scout Report → Deal Receipt.</p>
-    </div>
-  </section>
-
-  <section class="sections">
-    <div class="panel">
-      <h2>Dealar Skill System</h2>
-      <p class="muted">Circle skills principle translated into Dealar-native agent skills: narrow triggers, clear artifacts, read-only checks separated from paid/value-moving actions.</p>
-      <table><thead><tr><th>Skill</th><th>Artifact</th><th>Policy</th></tr></thead><tbody>
-      ${model.skillManifest.skills.map((skill) => `<tr><td>${escapeHtml(skill.name)}<br><span class="muted">${escapeHtml(skill.intent)}</span></td><td>${escapeHtml(skill.outputArtifact)}</td><td><code>${escapeHtml(skill.paymentPolicy)}</code></td></tr>`).join('')}
-      </tbody></table>
-      <p class="muted">Manifest: <code>${escapeHtml(model.skillManifest.endpoints.skillManifest)}</code></p>
-    </div>
-    <div class="panel">
-      <h2>Skill Safety Guardrails</h2>
-      <div class="flow">${model.skillManifest.referencePrinciples.map((principle) => `<div>${escapeHtml(principle)}</div>`).join('')}</div>
-      <p class="muted">Never auto-execute: ${model.skillManifest.activationPolicy.neverAutoExecute.map((item) => `<code>${escapeHtml(item)}</code>`).join(' ')}</p>
-    </div>
-  </section>
-
-  <section class="sections">
-    <div class="panel">
-      <h2>MCP Readiness Stack</h2>
-      <p class="muted">Inspired by the MCP server catalog: Dealar keeps a small high-value tool stack for research, docs grounding, browser QA, deployment checks, and supervised payment safety.</p>
-      <table><thead><tr><th>MCP</th><th>Use in Dealar</th><th>Status</th></tr></thead><tbody>
-      ${model.mcpReadiness.integrations.slice(0, 7).map((item) => `<tr><td>${escapeHtml(item.name)}<br><span class="muted">${escapeHtml(item.category)}</span></td><td>${escapeHtml(item.dealarUseCase)}</td><td><code>${escapeHtml(item.status)}</code></td></tr>`).join('')}
-      </tbody></table>
-    </div>
-    <div class="panel">
-      <h2>MCP Safety Guardrails</h2>
-      <div class="flow">${model.mcpReadiness.summary.safetyPrinciples.map((principle) => `<div>${escapeHtml(principle)}</div>`).join('')}</div>
-      <p class="muted">Starter stack: ${model.mcpReadiness.recommendedStarterStack.map((item) => `<code>${escapeHtml(item)}</code>`).join(' ')}</p>
-    </div>
-  </section>
-
-  <section class="sections">
-    <div class="panel">
-      <h2>Marketplace Service Catalog</h2>
-      <table><thead><tr><th>Service</th><th>Category</th><th>Price</th><th>Rail</th></tr></thead><tbody>
-      ${model.services.map((service) => `<tr><td>${escapeHtml(service.name)}<br><code>${escapeHtml(service.endpoint.method)} ${escapeHtml(service.endpoint.path)}</code></td><td>${escapeHtml(service.category)}</td><td>${escapeHtml(service.price.usdc)} USDC</td><td>${escapeHtml(service.paymentRail)}</td></tr>`).join('')}
-      </tbody></table>
-    </div>
-    <div class="panel">
-      <h2>Receipt Ledger</h2>
-      <p class="muted">Total revenue: <code>${escapeHtml(model.ledgerSummary.totalRevenueUsdc)} USDC</code> · Receipts: <code>${escapeHtml(model.ledgerSummary.totalReceipts)}</code></p>
-      <table><thead><tr><th>Receipt</th><th>Service</th><th>USDC</th><th>Result</th></tr></thead><tbody>
-      ${model.receiptLedger.map((receipt) => `<tr><td><code>${escapeHtml(receipt.id)}</code></td><td>${escapeHtml(receipt.serviceId)}</td><td>${escapeHtml(receipt.amount.usdc)}</td><td>${escapeHtml(receipt.resultSummary)}</td></tr>`).join('')}
-      </tbody></table>
-    </div>
-  </section>
-
-  <section class="sections">
-    <div class="panel">
-      <h2>WHOOP Deal Report</h2>
-      <div class="deal">
-      ${model.dealReport.best_deals.slice(0, 6).map((d) => `<div class="deal-card"><strong>${escapeHtml(d.merchant)}</strong> · ${escapeHtml(d.region.toUpperCase())} · <span class="score">${escapeHtml(Math.round(d.confidence * 100))}%</span><br><span class="muted">${escapeHtml(d.deal_type)} — ${escapeHtml(d.price_note)}</span></div>`).join('')}
-      </div>
-    </div>
-    <div class="panel">
-      <h2>Request Logs</h2>
-      <table><thead><tr><th>Agent</th><th>Endpoint</th><th>USDC</th><th>Result</th></tr></thead><tbody>
-      ${model.requestLogs.map((log) => `<tr><td>${escapeHtml(log.agent)}</td><td><code>${escapeHtml(log.endpoint)}</code></td><td>${escapeHtml(log.amount)}</td><td>${escapeHtml(log.result)}</td></tr>`).join('')}
-      </tbody></table>
-    </div>
-  </section>
-
-  <section class="panel" style="margin-top:18px">
-    <h2>Circle Gateway Payment Trace</h2>
-    <p class="muted">Settlement: <code>${escapeHtml(model.gatewayTrace.settlementId)}</code> · Status: <code>${escapeHtml(model.gatewayTrace.status)}</code></p>
-    <div class="flow">${model.gatewayTrace.steps.map((step) => `<div><strong>${escapeHtml(step.title)}</strong><br><span class="muted">${escapeHtml(step.description)}</span></div>`).join('')}</div>
-    <p class="muted">Batch tx: <code>${escapeHtml(model.gatewayTrace.batchTx || 'pending')}</code></p>
-  </section>
-
-  <section class="sections">
-    <div class="panel">
-      <h2>Circle Agent Stack Quickstart Notes</h2>
-      <p class="muted">${escapeHtml(model.agentStack.thesis)}</p>
-      <table><thead><tr><th>Component</th><th>Dealar mapping</th></tr></thead><tbody>
-      ${model.agentStack.components.map((component) => `<tr><td>${escapeHtml(component.name)}</td><td>${escapeHtml(component.dealarMapping)}</td></tr>`).join('')}
-      </tbody></table>
-    </div>
-    <div class="panel">
-      <h2>Buyer Workflow Checklist</h2>
-      <div class="flow">${model.agentStack.buyerWorkflow.slice(0, 8).map((step) => `<div>${escapeHtml(step)}</div>`).join('')}</div>
-    </div>
-  </section>
-
-  <section class="sections">
-    <div class="panel">
-      <h2>Retail Intelligence Preview</h2>
-      <table><thead><tr><th>Retailer</th><th>Market</th><th>Strengths</th><th>Confidence</th></tr></thead><tbody>
-      ${model.retailers.map((r) => `<tr><td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.market.toUpperCase())}</td><td>${escapeHtml(r.strengths.join(', '))}</td><td>${escapeHtml(Math.round(r.confidence * 100))}%</td></tr>`).join('')}
-      </tbody></table>
-    </div>
-    <div class="panel">
-      <h2>Agent Runtime Integration</h2>
-      <table><thead><tr><th>Runtime</th><th>Status</th><th>Command / Tool</th></tr></thead><tbody>
-      ${model.runtimeIntegrations.map((item) => `<tr><td>${escapeHtml(item.name)}</td><td>${escapeHtml(item.status)}</td><td><code>${escapeHtml(item.command)}</code></td></tr>`).join('')}
-      </tbody></table>
+      <h2>API for dashboard</h2>
+      <div class="endpoint-list">${model.endpoints.map((e) => `<div class="endpoint"><code>${escapeHtml(e.method)} ${escapeHtml(e.path)}</code><br><span class="muted">${escapeHtml(e.description)}</span></div>`).join('')}</div>
     </div>
   </section>
 </main>
