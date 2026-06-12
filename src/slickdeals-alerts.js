@@ -1,5 +1,6 @@
 export {
   DEMO_SLICKDEALS_FEED,
+  buildSlickdealsRssUrl,
   buildSlickdealsSearchUrl,
   canonical,
   extractMerchant,

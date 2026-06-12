@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { answerTelegramDealRequest, buildTelegramSetupGuide } from '../src/telegram-agent.js';
+import { resetSlickdealsState } from '../src/slickdeals-alerts.js';
 
 test('answerTelegramDealRequest returns help for start messages', () => {
   const answer = answerTelegramDealRequest({ text: '/start', baseUrl: 'https://dealar.example' });
@@ -13,12 +14,14 @@ test('answerTelegramDealRequest returns help for start messages', () => {
 });
 
 test('answerTelegramDealRequest handles natural-language deal hunting', () => {
+  resetSlickdealsState();
   const answer = answerTelegramDealRequest({ text: 'săn deal Dyson Airwrap dưới 350$' });
 
   assert.equal(answer.ok, true);
   assert.equal(answer.intent, 'deal');
   assert.match(answer.query, /Dyson Airwrap/i);
-  assert.match(answer.message, /Dealar Slickdeals check/i);
+  assert.match(answer.message, /No exact Slickdeals deal found/i);
+  assert.match(answer.message, /Search Slickdeals:/i);
   assert.ok(answer.artifacts.some((artifact) => artifact.type === 'Slickdeals Watchlist'));
 });
 

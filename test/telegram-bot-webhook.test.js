@@ -79,6 +79,9 @@ test('buildTelegramWebhookSetup exposes setup metadata without leaking token', (
   const setup = buildTelegramWebhookSetup({ baseUrl: 'https://dealar.example', botTokenConfigured: true, secretTokenConfigured: true });
 
   assert.equal(setup.webhookUrl, 'https://dealar.example/v1/telegram/webhook');
+  assert.equal(setup.setWebhookPayload.url, 'https://dealar.example/v1/telegram/webhook');
+  assert.deepEqual(setup.setWebhookPayload.allowed_updates, ['message', 'edited_message', 'channel_post', 'callback_query']);
+  assert.ok(setup.commands.some((command) => command.command === 'deal'));
   assert.equal(setup.botTokenConfigured, true);
   assert.equal(setup.secretTokenConfigured, true);
   assert.equal(setup.network.caip2, 'eip155:5042002');

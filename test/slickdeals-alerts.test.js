@@ -27,6 +27,15 @@ test('parseSlickdealsRss normalizes RSS items into Dealar deal records', () => {
   assert.equal(deals[0].merchant, 'Best Buy');
 });
 
+test('buildSlickdealsRssUrl creates feed URL for Slickdeals keywords and categories', async () => {
+  const { buildSlickdealsRssUrl } = await import('../src/slickdeals-alerts.js');
+
+  assert.equal(
+    buildSlickdealsRssUrl({ query: 'macbook air', category: 'frontpage' }),
+    'https://slickdeals.net/newsearch.php?q=macbook%20air&pp=20&forumid=all&sort=newest&mode=frontpage&r=1'
+  );
+});
+
 test('Slickdeals alert engine dedupes deals and queues Telegram-ready notifications', () => {
   resetSlickdealsState();
   const upsert = upsertDeals([{ title: '$699 iPhone 16 at Best Buy', url: 'https://slickdeals.net/f/2', external_id: 'slick-2', price: 699, thumb_score: 11, merchant: 'Best Buy' }]);

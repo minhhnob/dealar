@@ -64,10 +64,24 @@ export async function handleTelegramWebhook({ update = {}, baseUrl = 'https://pr
 }
 
 export function buildTelegramWebhookSetup({ baseUrl = 'https://prodeal-api.vercel.app', secretTokenConfigured = false, botTokenConfigured = Boolean(getBotToken()) } = {}) {
+  const webhookUrl = `${baseUrl}/v1/telegram/webhook`;
   return {
     name: 'Dealar Telegram Bot Webhook',
-    webhookUrl: `${baseUrl}/v1/telegram/webhook`,
+    webhookUrl,
     setWebhookUrl: `${TELEGRAM_API_BASE}/bot<TELEGRAM_BOT_TOKEN>/setWebhook`,
+    setWebhookPayload: {
+      url: webhookUrl,
+      secret_token: '<DEALAR_TELEGRAM_WEBHOOK_SECRET>',
+      allowed_updates: ['message', 'edited_message', 'channel_post', 'callback_query'],
+      drop_pending_updates: true,
+    },
+    commands: [
+      { command: 'start', description: 'Mở hướng dẫn Dealar' },
+      { command: 'deal', description: 'Check deal Slickdeals theo sản phẩm' },
+      { command: 'alerts', description: 'Xem alert rule đang bật' },
+      { command: 'quote', description: 'Báo giá demo cho sản phẩm' },
+      { command: 'scout', description: 'Tạo Scout Report demo' },
+    ],
     requiredEnv: ['DEALAR_TELEGRAM_BOT_TOKEN'],
     optionalEnv: ['DEALAR_TELEGRAM_WEBHOOK_SECRET'],
     botTokenConfigured,

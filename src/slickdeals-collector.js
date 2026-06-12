@@ -97,3 +97,14 @@ export function parseSlickdealsRss(xml = '') {
 export function buildSlickdealsSearchUrl(query = '') {
   return `https://slickdeals.net/newsearch.php?q=${encodeURIComponent(query)}`;
 }
+
+export function buildSlickdealsRssUrl({ query = '', category = 'all', limit = 20 } = {}) {
+  const params = new URLSearchParams();
+  params.set('q', query);
+  params.set('pp', String(limit));
+  params.set('forumid', 'all');
+  params.set('sort', 'newest');
+  if (category && category !== 'all') params.set('mode', category);
+  params.set('r', '1');
+  return `https://slickdeals.net/newsearch.php?${params.toString().replaceAll('+', '%20')}`;
+}
