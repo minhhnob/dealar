@@ -6,6 +6,8 @@ export {
   extractMerchant,
   extractPrice,
   extractThumbScore,
+  fetchSlickdealsLiveSearch,
+  isSlickdealsBlockedResponse,
   normalizeDeal,
   parseSlickdealsRss,
 } from './slickdeals-collector.js';

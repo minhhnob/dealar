@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { createApp } from '../src/server.js';
 import {
   evaluateAlerts,
+  fetchSlickdealsLiveSearch,
   listDeals,
   parseSlickdealsRss,
   pollSlickdealsDemo,
@@ -34,6 +35,36 @@ test('buildSlickdealsRssUrl creates feed URL for Slickdeals keywords and categor
     buildSlickdealsRssUrl({ query: 'macbook air', category: 'frontpage' }),
     'https://slickdeals.net/newsearch.php?q=macbook%20air&pp=20&forumid=all&sort=newest&mode=frontpage&r=1'
   );
+});
+
+
+test('fetchSlickdealsLiveSearch falls back to readable Markdown when Cloudflare blocks direct search', async () => {
+  const fetchImpl = async (url) => {
+    if (String(url).startsWith('https://slickdeals.net/')) {
+      return new Response('<title>Just a moment...</title><script src="https://challenges.cloudflare.com"></script>', { status: 403 });
+    }
+    return new Response(`Title: Slickdeals Search
+
+*   
+[![Image 3](https://static.slickdealscdn.com/attachment/apple-watch.thumb)](https://slickdeals.net/f/19607439-apple-watch-test)
+
+[VONUV 3-in-1 Wireless Adapter for Apple Watch](https://slickdeals.net/f/19607439-vonuv-3-in-1-apple-watch-8-80?src=SDSearchv3 "VONUV 3-in-1 Wireless Adapter for Apple Watch")Found by LolaBunny21 • Jun 08, 2026 10:04 PM  [$8.80$26 66% off](https://slickdeals.net/f/19607439-vonuv-3-in-1-apple-watch-8-80)Amazon  
+
++117
+
+ frontpage
+`, { status: 200 });
+  };
+
+  const result = await fetchSlickdealsLiveSearch({ query: 'apple watch', fetchImpl });
+
+  assert.equal(result.blocked, true);
+  assert.equal(result.fetch_mode, 'jina-markdown');
+  assert.equal(result.deals.length, 1);
+  assert.match(result.deals[0].title, /Apple Watch/);
+  assert.equal(result.deals[0].price, 8.80);
+  assert.equal(result.deals[0].merchant, 'Amazon');
+  assert.equal(result.deals[0].thumb_score, 117);
 });
 
 test('Slickdeals alert engine dedupes deals and queues Telegram-ready notifications', () => {

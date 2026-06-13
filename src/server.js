@@ -30,6 +30,7 @@ import {
   deleteAlertRule,
   getDeal,
   getSlickdealsStateSummary,
+  fetchSlickdealsLiveSearch,
   listAlerts,
   listDeals,
   listNotifications,
@@ -127,14 +128,24 @@ export async function createApp() {
     res.json(getSlickdealsStateSummary());
   });
 
-  app.get('/v1/deals', (req, res) => {
-    res.json({ deals: listDeals({
+  app.get('/v1/deals', async (req, res) => {
+    const storedDeals = listDeals({
       query: req.query.query,
       merchant: req.query.merchant,
       minThumbScore: req.query.minThumbScore,
       maxPrice: req.query.maxPrice,
       limit: req.query.limit || 50,
-    }) });
+    });
+
+    if (req.query.live === '1' || req.query.live === 'true') {
+      const live = await fetchSlickdealsLiveSearch({
+        query: req.query.query || '',
+        limit: Number(req.query.limit || 10),
+      });
+      return res.json({ deals: live.deals, storedDeals, live });
+    }
+
+    return res.json({ deals: storedDeals });
   });
 
   app.get('/v1/deals/:id', (req, res, next) => {
