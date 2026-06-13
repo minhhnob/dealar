@@ -43,8 +43,8 @@ export const DEMO_SLICKDEALS_FEED = [
 ];
 
 export function extractPrice(text) {
-  const match = String(text || '').match(/\$\s?(\d+(?:\.\d{1,2})?)/);
-  return match ? Number(match[1]) : null;
+  const match = String(text || '').match(/\$\s?([0-9]{1,3}(?:,?[0-9]{3})*(?:\.\d{1,2})?)/);
+  return match ? Number(match[1].replaceAll(',', '')) : null;
 }
 
 export function extractThumbScore(text) {
@@ -55,6 +55,22 @@ export function extractThumbScore(text) {
 export function extractMerchant(title) {
   const match = String(title || '').match(/\s(?:at|@)\s([^|\-–—]+)/i);
   return match ? match[1].trim() : 'Slickdeals merchant';
+}
+
+export function extractImageUrl(html = '') {
+  const text = String(html || '');
+  return text.match(/<media:thumbnail[^>]+url=["']([^"']+)["'][^>]*\/?>(?:<\/media:thumbnail>)?/i)?.[1]
+    || text.match(/<media:content[^>]+url=["']([^"']+)["'][^>]*\/?>(?:<\/media:content>)?/i)?.[1]
+    || text.match(/<enclosure[^>]+url=["']([^"']+)["'][^>]*\/?>(?:<\/enclosure>)?/i)?.[1]
+    || text.match(/<img[^>]+src=["']([^"'>]+)["']/i)?.[1]
+    || null;
+}
+
+export function extractMerchantDomain(html = '') {
+  const text = String(html || '');
+  return text.match(/data-product-exitWebsite=["']([^"']+)["']/i)?.[1]
+    || text.match(/https?:\/\/(?:www\.)?([a-z0-9.-]+\.[a-z]{2,})(?:[\/"'\s>)]|$)/i)?.[1]
+    || null;
 }
 
 function numericOrNull(value) {
@@ -76,6 +92,7 @@ export function normalizeDeal(input = {}) {
     url,
     price: parsedPrice ?? extractPrice(title),
     merchant: input.merchant || extractMerchant(title),
+    merchant_domain: input.merchant_domain || input.merchantDomain || extractMerchantDomain(input.description || input.rawDescription || ''),
     thumb_score: parsedScore ?? extractThumbScore(input.description || input.rawDescription || ''),
     image_url: input.image_url || input.imageUrl || null,
     posted_at: input.posted_at || input.pubDate || nowIso(),
@@ -93,13 +110,18 @@ export const decodeXml = (value) => String(value || '')
 
 export function parseSlickdealsRss(xml = '') {
   const items = [...String(xml).matchAll(/<item[\s\S]*?<\/item>/gi)];
-  return items.map(([item]) => normalizeDeal({
-    title: decodeXml(item.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>|<title>([\s\S]*?)<\/title>/i)?.[1] || item.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>|<title>([\s\S]*?)<\/title>/i)?.[2] || ''),
-    url: decodeXml(item.match(/<link>([\s\S]*?)<\/link>/i)?.[1] || ''),
-    guid: decodeXml(item.match(/<guid[^>]*>([\s\S]*?)<\/guid>/i)?.[1] || ''),
-    pubDate: decodeXml(item.match(/<pubDate>([\s\S]*?)<\/pubDate>/i)?.[1] || nowIso()),
-    rawDescription: decodeXml(item.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>|<description>([\s\S]*?)<\/description>/i)?.[1] || item.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>|<description>([\s\S]*?)<\/description>/i)?.[2] || ''),
-  }));
+  return items.map(([item]) => {
+    const rawDescription = decodeXml(item.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>|<description>([\s\S]*?)<\/description>/i)?.[1] || item.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>|<description>([\s\S]*?)<\/description>/i)?.[2] || '');
+    return normalizeDeal({
+      title: decodeXml(item.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>|<title>([\s\S]*?)<\/title>/i)?.[1] || item.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>|<title>([\s\S]*?)<\/title>/i)?.[2] || ''),
+      url: decodeXml(item.match(/<link>([\s\S]*?)<\/link>/i)?.[1] || ''),
+      guid: decodeXml(item.match(/<guid[^>]*>([\s\S]*?)<\/guid>/i)?.[1] || ''),
+      pubDate: decodeXml(item.match(/<pubDate>([\s\S]*?)<\/pubDate>/i)?.[1] || nowIso()),
+      rawDescription,
+      image_url: extractImageUrl(item) || extractImageUrl(rawDescription),
+      merchant_domain: extractMerchantDomain(rawDescription),
+    });
+  });
 }
 
 export function buildSlickdealsSearchUrl(query = '') {

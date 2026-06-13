@@ -34,6 +34,7 @@ export function normalizeAlertRule(input = {}) {
     enabled: input.enabled !== false,
     includeKeywords: splitList(input.includeKeywords || input.include || '').map(canonical).filter(Boolean),
     excludeKeywords: splitList(input.excludeKeywords || input.exclude || '').map(canonical).filter(Boolean),
+    minPrice: input.minPrice === undefined || input.minPrice === '' ? null : Number(input.minPrice),
     maxPrice: input.maxPrice === undefined || input.maxPrice === '' ? null : Number(input.maxPrice),
     minThumbScore: Number(input.minThumbScore ?? input.minScore ?? 0),
     merchant: input.merchant || '',
@@ -50,9 +51,10 @@ export function matchesAlert(deal, alert) {
   const includeOk = !alert.includeKeywords?.length || alert.includeKeywords.some((keyword) => title.includes(keyword));
   const excludeHit = alert.excludeKeywords?.some((keyword) => title.includes(keyword));
   const scoreOk = Number(deal.thumb_score || 0) >= Number(alert.minThumbScore || 0);
-  const priceOk = !alert.maxPrice || deal.price === null || Number(deal.price) <= Number(alert.maxPrice);
+  const minPriceOk = !alert.minPrice || deal.price === null || Number(deal.price) >= Number(alert.minPrice);
+  const maxPriceOk = !alert.maxPrice || deal.price === null || Number(deal.price) <= Number(alert.maxPrice);
   const merchantOk = !alert.merchant || merchant.includes(canonical(alert.merchant));
-  return includeOk && !excludeHit && scoreOk && priceOk && merchantOk;
+  return includeOk && !excludeHit && scoreOk && minPriceOk && maxPriceOk && merchantOk;
 }
 
 export function parseNaturalAlertCommand(text = '') {

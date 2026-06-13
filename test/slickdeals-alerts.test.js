@@ -6,6 +6,7 @@ import {
   evaluateAlerts,
   fetchSlickdealsLiveSearch,
   listDeals,
+  matchesAlert,
   parseSlickdealsRss,
   pollSlickdealsDemo,
   resetSlickdealsState,
@@ -26,6 +27,30 @@ test('parseSlickdealsRss normalizes RSS items into Dealar deal records', () => {
   assert.equal(deals[0].price, 599);
   assert.equal(deals[0].thumb_score, 38);
   assert.equal(deals[0].merchant, 'Best Buy');
+});
+
+test('parseSlickdealsRss extracts image and merchant domain from Slickdeals RSS HTML', () => {
+  const deals = parseSlickdealsRss(`<?xml version="1.0"?><rss><channel><item>
+    <title><![CDATA[$1,299.99 OLED Laptop at Lenovo]]></title>
+    <link>https://slickdeals.net/f/merchant-domain-test</link>
+    <guid>slick-domain</guid>
+    <media:thumbnail url="https://static.slickdealscdn.com/attachment/laptop.thumb" />
+    <description><![CDATA[Thumb Score: +44 <a data-product-exitWebsite="lenovo.com" href="https://www.lenovo.com/us/en">Shop</a>]]></description>
+  </item></channel></rss>`);
+
+  assert.equal(deals.length, 1);
+  assert.equal(deals[0].price, 1299.99);
+  assert.equal(deals[0].image_url, 'https://static.slickdealscdn.com/attachment/laptop.thumb');
+  assert.equal(deals[0].merchant_domain, 'lenovo.com');
+  assert.equal(deals[0].thumb_score, 44);
+});
+
+test('matchesAlert supports reference-style min and max price windows', () => {
+  const deal = { title: '$699 Apple Watch Ultra at Amazon', merchant: 'Amazon', price: 699, thumb_score: 25 };
+
+  assert.equal(matchesAlert(deal, { enabled: true, includeKeywords: ['apple watch'], excludeKeywords: [], minPrice: 500, maxPrice: 800, minThumbScore: 10 }), true);
+  assert.equal(matchesAlert(deal, { enabled: true, includeKeywords: ['apple watch'], excludeKeywords: [], minPrice: 700, maxPrice: 800, minThumbScore: 10 }), false);
+  assert.equal(matchesAlert(deal, { enabled: true, includeKeywords: ['apple watch'], excludeKeywords: [], minPrice: 500, maxPrice: 650, minThumbScore: 10 }), false);
 });
 
 test('buildSlickdealsRssUrl creates feed URL for Slickdeals keywords and categories', async () => {
