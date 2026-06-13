@@ -156,6 +156,33 @@ function absoluteSlickdealsUrl(url = '') {
   return `https://slickdeals.net/${value}`;
 }
 
+const QUERY_STOPWORDS = new Set([
+  'check', 'sale', 'deal', 'deals', 'today', 'hom', 'nay', 'hôm',
+  'kiem', 'tra', 'kiểm', 'săn', 'san', 'tim', 'tìm', 'cho', 'bao', 'gia', 'giá',
+]);
+
+export function extractQueryTerms(query = '') {
+  return canonical(query)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .split(/[^a-z0-9]+/)
+    .map((term) => term.trim())
+    .filter((term) => term.length >= 2 && !QUERY_STOPWORDS.has(term));
+}
+
+export function isDealRelevantToQuery(deal = {}, query = '') {
+  const terms = extractQueryTerms(query);
+  if (!terms.length) return true;
+  const haystack = canonical(`${deal.title || ''} ${deal.merchant || ''}`)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  return terms.every((term) => haystack.includes(term));
+}
+
+function filterDealsByQuery(deals = [], query = '', { limit = 10 } = {}) {
+  return deals.filter((deal) => isDealRelevantToQuery(deal, query)).slice(0, Number(limit || 10));
+}
+
 function extractMarkdownSearchDeals(markdown = '', { limit = 10 } = {}) {
   const blocks = String(markdown || '').split(/\n\*\s+\n(?=\[!\[Image)/g);
   const deals = [];
@@ -196,9 +223,9 @@ export async function fetchSlickdealsLiveSearch({ query = '', limit = 10, fetchI
   const directText = await direct.text();
   if (!isSlickdealsBlockedResponse({ status: direct.status, text: directText })) {
     const rssDeals = parseSlickdealsRss(directText);
-    if (rssDeals.length) return { deals: rssDeals.slice(0, limit), source_url: searchUrl, fetch_mode: 'direct-rss', blocked: false };
+    if (rssDeals.length) return { deals: filterDealsByQuery(rssDeals, query, { limit }), source_url: searchUrl, fetch_mode: 'direct-rss', blocked: false, unfiltered_count: rssDeals.length };
     const htmlDeals = extractMarkdownSearchDeals(directText, { limit });
-    if (htmlDeals.length) return { deals: htmlDeals, source_url: searchUrl, fetch_mode: 'direct-html', blocked: false };
+    if (htmlDeals.length) return { deals: filterDealsByQuery(htmlDeals, query, { limit }), source_url: searchUrl, fetch_mode: 'direct-html', blocked: false, unfiltered_count: htmlDeals.length };
   }
 
   const jinaUrl = buildSlickdealsJinaUrl(searchUrl);
@@ -207,11 +234,13 @@ export async function fetchSlickdealsLiveSearch({ query = '', limit = 10, fetchI
   if (!fallback.ok) {
     return { deals: [], source_url: searchUrl, fallback_url: jinaUrl, fetch_mode: 'jina-markdown', blocked: true, error: `fallback_http_${fallback.status}` };
   }
+  const fallbackDeals = extractMarkdownSearchDeals(fallbackText, { limit: Math.max(Number(limit || 10), 20) });
   return {
-    deals: extractMarkdownSearchDeals(fallbackText, { limit }),
+    deals: filterDealsByQuery(fallbackDeals, query, { limit }),
     source_url: searchUrl,
     fallback_url: jinaUrl,
     fetch_mode: 'jina-markdown',
     blocked: true,
+    unfiltered_count: fallbackDeals.length,
   };
 }

@@ -5,6 +5,7 @@ import { createApp } from '../src/server.js';
 import {
   evaluateAlerts,
   fetchSlickdealsLiveSearch,
+  isDealRelevantToQuery,
   listDeals,
   matchesAlert,
   parseSlickdealsRss,
@@ -62,6 +63,12 @@ test('buildSlickdealsRssUrl creates feed URL for Slickdeals keywords and categor
   );
 });
 
+
+test('isDealRelevantToQuery rejects accessory-only results for exact product queries', () => {
+  assert.equal(isDealRelevantToQuery({ title: 'Used/Like New: Apple Pencil Pro', merchant: 'Amazon' }, 'ipad air m4'), false);
+  assert.equal(isDealRelevantToQuery({ title: '$499 Apple iPad Air M4 128GB Wi-Fi', merchant: 'Best Buy' }, 'ipad air m4'), true);
+  assert.equal(isDealRelevantToQuery({ title: '$499 Apple iPad Air M4 128GB Wi-Fi', merchant: 'Best Buy' }, 'check sale ipad air m4 hôm nay'), true);
+});
 
 test('fetchSlickdealsLiveSearch falls back to readable Markdown when Cloudflare blocks direct search', async () => {
   const fetchImpl = async (url) => {
