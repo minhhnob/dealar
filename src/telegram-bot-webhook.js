@@ -1,4 +1,4 @@
-import { answerTelegramDealRequest } from './telegram-agent.js';
+import { answerTelegramDealRequestLive } from './telegram-agent.js';
 
 const TELEGRAM_API_BASE = 'https://api.telegram.org';
 
@@ -46,7 +46,7 @@ export async function handleTelegramWebhook({ update = {}, baseUrl = 'https://pr
     return { ok: true, ignored: true, reason: 'no_chat_id', incoming };
   }
 
-  const answer = answerTelegramDealRequest({
+  const answer = await answerTelegramDealRequestLive({
     text: incoming.text || '/help',
     baseUrl,
     userId: incoming.userId,

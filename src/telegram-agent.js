@@ -1,6 +1,6 @@
 import { DEFAULT_DEALER_SOURCES, searchDealerCoupons, searchDealerDeals, quoteProduct } from './dealer-scout.js';
 import { buildScoutReport, createDealRequestTicket } from './dealer-native-product.js';
-import { createAlertRule, listAlerts, listDeals, parseNaturalAlertCommand } from './slickdeals-alerts.js';
+import { createAlertRule, fetchSlickdealsLiveSearch, listAlerts, listDeals, parseNaturalAlertCommand } from './slickdeals-alerts.js';
 
 const DEFAULT_SOURCES = DEFAULT_DEALER_SOURCES;
 
@@ -151,10 +151,7 @@ function formatScoutReport(report) {
   ].filter(Boolean).join('\n');
 }
 
-export function answerTelegramDealRequest({ text = '', baseUrl = 'https://prodeal-api.vercel.app', userId = 'telegram-user' } = {}) {
-  const intent = detectIntent(text);
-  const query = extractQuery(text);
-
+function buildTelegramAnswer({ text = '', intent, query, baseUrl, userId, liveDeals = null } = {}) {
   if (intent === 'help') {
     return { ok: true, intent, query: null, message: helpMessage(baseUrl), artifacts: [] };
   }
@@ -190,9 +187,25 @@ export function answerTelegramDealRequest({ text = '', baseUrl = 'https://prodea
     return { ok: true, intent, query, message: formatScoutReport(report), artifacts: [{ type: 'Scout Report', data: report }] };
   }
 
-  const deals = listDeals({ query, limit: 5 });
+  const storedDeals = listDeals({ query, limit: 5 });
+  const deals = liveDeals || storedDeals;
   const message = formatSlickdealsCheck(query, deals, baseUrl);
-  return { ok: true, intent: 'deal', query, message, artifacts: [{ type: 'Slickdeals Watchlist', data: { query, deals } }] };
+  return { ok: true, intent: 'deal', query, message, artifacts: [{ type: liveDeals ? 'Slickdeals Live Search' : 'Slickdeals Watchlist', data: { query, deals, storedDeals } }] };
+}
+
+export function answerTelegramDealRequest({ text = '', baseUrl = 'https://prodeal-api.vercel.app', userId = 'telegram-user' } = {}) {
+  const intent = detectIntent(text);
+  const query = extractQuery(text);
+  return buildTelegramAnswer({ text, intent, query, baseUrl, userId });
+}
+
+export async function answerTelegramDealRequestLive({ text = '', baseUrl = 'https://prodeal-api.vercel.app', userId = 'telegram-user', fetchImpl = fetch } = {}) {
+  const intent = detectIntent(text);
+  const query = extractQuery(text);
+  if (intent !== 'deal') return buildTelegramAnswer({ text, intent, query, baseUrl, userId });
+  const live = await fetchSlickdealsLiveSearch({ query, limit: 5, fetchImpl });
+  const answer = buildTelegramAnswer({ text, intent, query, baseUrl, userId, liveDeals: live.deals });
+  return { ...answer, live };
 }
 
 export function buildTelegramSetupGuide({ baseUrl = 'https://prodeal-api.vercel.app' } = {}) {

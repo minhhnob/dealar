@@ -43,7 +43,7 @@ import { buildGatewayTraceModel, fetchGatewaySettlement, resolveGatewayBatchTx }
 import { createDemoReceiptLedger, getPaymentReceipt, summarizePaymentLedger } from './payment-ledger.js';
 import { buildDealarMcpReadiness, formatMcpReadinessTelegramSummary } from './mcp-integration-catalog.js';
 import { listMarketplaceServices, summarizeMarketplaceServices } from './service-catalog.js';
-import { answerTelegramDealRequest, buildTelegramSetupGuide } from './telegram-agent.js';
+import { answerTelegramDealRequest, answerTelegramDealRequestLive, buildTelegramSetupGuide } from './telegram-agent.js';
 import { buildTelegramWebhookSetup, handleTelegramWebhook } from './telegram-bot-webhook.js';
 import { buildX402RouteConfig, getX402Environment } from './x402-config.js';
 
@@ -220,11 +220,11 @@ export async function createApp() {
     res.json({ ok: true, setup: buildTelegramSetupGuide({ baseUrl }) });
   });
 
-  app.post('/v1/telegram/dealar-agent', (req, res) => {
+  app.post('/v1/telegram/dealar-agent', async (req, res) => {
     const baseUrl = getRequestBaseUrl(req);
     const text = req.body?.message?.text || req.body?.text || req.body?.query || '';
     const userId = req.body?.message?.from?.id || req.body?.userId || 'telegram-user';
-    res.json(answerTelegramDealRequest({ text, baseUrl, userId }));
+    res.json(await answerTelegramDealRequestLive({ text, baseUrl, userId }));
   });
 
   app.get('/v1/telegram/webhook/setup', (req, res) => {
